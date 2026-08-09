@@ -59,10 +59,15 @@
       <a class="text-link" href="#why-n2j" data-chapter-link="why-n2j">설계 방식 보기</a>
     </div>
     <div class="hero-composition media-stage" aria-label="브랜드 커머스 설계 과정을 그린 스케치 영상">
-      <div class="media-stage__top"><span>MEDIA PLACEHOLDER</span><span>01 / 06</span></div>
+      <!-- These two rows read "MEDIA PLACEHOLDER" and "IMAGE / VIDEO ASSET REQUIRED"
+           until the hero video reports ready, and develop.css then hides them. That is
+           fine on a build machine and wrong on a public URL: if the 3MB video is slow or
+           blocked, the first screen a visitor sees asks its own author for an asset,
+           over a poster image that has already loaded. The labels now name the scene. -->
+      <div class="media-stage__top"><span>BRAND COMMERCE</span><span>01 / 06</span></div>
       <video class="intro-hero-video" data-intro-hero-video poster="./assets/videos/intro/n2jtrini-hero-poster.jpg" autoplay muted defaultmuted loop playsinline webkit-playsinline preload="metadata" aria-hidden="true" tabindex="-1" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback"></video>
       <div class="intro-media-mark" aria-hidden="true"><span>BRAND</span><i></i><span>COMMERCE</span></div>
-      <div class="media-stage__bottom"><span>IMAGE / VIDEO ASSET REQUIRED</span><span>N2J TRINI</span></div>
+      <div class="media-stage__bottom"><span>DESIGN IN PROGRESS</span><span>N2J TRINI</span></div>
       <span class="intro-media-credit">AI 제작 이미지 영상</span>
     </div>
   </div>

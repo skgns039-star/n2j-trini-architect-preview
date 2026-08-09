@@ -160,16 +160,18 @@ img, video { display: block; max-width: 100%; }
 .commerce { padding: clamp(2.5rem, 7vh, 5rem) 0; }
 .commerce__head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
 .commerce__head h2 { margin: 0; font-size: clamp(1.1rem, 1rem + .5vw, 1.5rem); font-weight: 400; letter-spacing: -.02em; }
-/* The slot explains itself only while it is empty. `:empty` stops matching the moment
- * the Imweb widget is pasted in, so no scaffolding copy can ship by accident. */
+/* The slot speaks to the VISITOR while it is empty, not to whoever installs the widget.
+ * It previously read as a build slot, and the HTML carried an install instruction in
+ * view-source — on the three pages that take money, with the primary CTA scrolling the
+ * buyer straight into it. `:empty` stops matching the moment the widget is in place. */
 .imweb-widget-slot { min-height: 260px; }
 .imweb-widget-slot:empty {
   border: 1px dashed var(--line);
   display: grid; place-items: center; padding: 2rem;
 }
 .imweb-widget-slot:empty::after {
-  content: "아임웹 쇼핑 위젯 자리";
-  font-size: 12px; color: var(--muted); letter-spacing: .02em;
+  content: "주문은 준비 중입니다. 아래 문의로 먼저 상담해 주세요.";
+  font-size: 13px; color: var(--muted); letter-spacing: -.01em; text-align: center;
 }
 
 /* --------------------------------------------------------------- spec ledger

@@ -67,20 +67,16 @@ let menuMotionControls = [];
 const clampIndex = (index) => Math.min(chapters.length - 1, Math.max(0, index));
 const chapterLeft = (index) => clampIndex(index) * stage.clientWidth;
 const exactSceneIndex = () => clampIndex(Math.round(stage.scrollLeft / Math.max(1, stage.clientWidth)));
-const isPreviewHost = () => ['localhost', '127.0.0.1', ''].includes(location.hostname);
 const interactiveSelector = 'a,button,input,textarea,select,label,summary,[role="button"],[contenteditable],[data-interactive],[data-no-chapter-nav],.cta,.menu-drawer,.state-rail,.works-viewer,.person-selector,.process-stage,.index-panel';
 const introVideo = document.querySelector('[data-intro-hero-video]');
 // The INTRO hero pointed at a Midjourney CDN URL the browser refuses cross-origin
 // (ERR_BLOCKED_BY_RESPONSE.NotSameOrigin), so screen one's hero media never played
 // in preview or production. Now served locally from N2J's own asset.
 //
-// Not any local file: the six videos already in assets/ are client screen
-// recordings. shop-landing.mp4 in particular is Duckfeet Korea's launch notice,
-// complete with a wordmark, an expired 00:00:00 countdown and a painted CTA —
-// under reduced motion it freezes on frame 0, which would make a client's dead
-// promotion N2J's permanent opening statement. n2jtrini-main.mp4 is N2J's own:
-// a pencil-sketch spread of a commerce site being designed, no third-party mark,
-// no countdown, no CTA, no dated copy. Verified frame by frame across its 12.75s.
+// Source chosen after frame-by-frame review of every candidate: n2jtrini-main.mp4 is
+// N2J's own work — a pencil-sketch spread of a commerce site being designed, carrying
+// no third-party mark and no dated copy. Verified across its full 12.75s. Assets that
+// belong to clients are not used to illustrate N2J's own product.
 // N2J's own asset, uncropped. A head-removed crop was tried and reverted at the
 // owner's direction: the figure is meant to be whole. The original file is used as
 // authored — no re-encode, no resize.
@@ -409,11 +405,9 @@ function setupChapterNavigation() {
       return;
     }
 
-    const inquiry = event.target.closest('[data-inquiry-channel]');
-    if (inquiry) {
-      showToast(`${inquiry.textContent.trim()} 링크는 config에서 연결 예정입니다. 실제 링크를 만들지 않았습니다.`);
-      return;
-    }
+    // The inquiry toast was removed. It fired on every contact control, said the link
+    // did not exist, and was false: the hrefs are real, they open, and the visitor's
+    // first attempt to reach N2J was answered by the site calling its own contact fake.
 
     if (event.target.closest('[data-index-toggle]')) {
       ui.indexPanel.classList.contains('is-open') ? closeIndex() : openIndex();
@@ -525,8 +519,11 @@ function setupChapterNavigation() {
   });
 
   addEventListener('popstate', () => {
+    // `: 0` used to live here, so any hash that is not a chapter — a stray anchor, a
+    // shared URL — silently threw the visitor back to INTRO. Matches the hashchange
+    // guard below: an unknown hash means stay put.
     const index = chapterIds.indexOf(location.hash.slice(1));
-    goToChapter(index >= 0 ? index : 0, { fromHistory: true });
+    if (index >= 0) goToChapter(index, { fromHistory: true });
   });
 
   addEventListener('hashchange', () => {
@@ -603,14 +600,10 @@ function setupShopViewer() {
   const layout = visual.closest('.shop-layout');
   const media = layout?.querySelector('.shop-gap-media');
   const video = media?.querySelector('[data-shop-video]');
-  // shop-coding.mp4 is REMOVED, not replaced. Frame inspection found it is a screen
-  // recording of a terminal exposing the OS account, the path to a keychain runner, a
-  // mode-600 config.json, and a discussion of MySQL root login-path and admin accounts.
-  // It was autoplaying on a public page. Treat anything visible in it as disclosed and
-  // rotate accordingly; this only stops further exposure.
+  // Media source removed — see the internal incident record. Options with no entry
+  // here render the no-source state below rather than borrowing another product's clip.
   const mediaSources = {
     prompt:'./assets/videos/shop/shop-mobile.mp4',
-    landing:'./assets/videos/shop/shop-landing.mp4',
   };
   let activeId = 'prompt';
   const syncVideo = () => {

@@ -770,3 +770,18 @@
 .shop-ambient__meta {
   color: var(--muted);
 }
+
+/* ------------------------------------------- Rail chapters read as one surface (mobile)
+ * The swipe dead zone above was half the problem; the other half is that a rail holding
+ * 392px of hidden scroll looked identical to static content, so two swipes that only
+ * moved the rail looked like two swipes that did nothing. The same edge fade the WHY tab
+ * rail already uses says "this continues" — one idiom, not a new one — and it clears
+ * itself once the rail is at its end so it never advertises scroll that isn't there.
+ */
+@media (max-width: 900px) {
+  .process-rail.has-more:not(.at-end),
+  .plans-rail.has-more:not(.at-end) {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
+  }
+}

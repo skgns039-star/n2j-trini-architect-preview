@@ -248,3 +248,158 @@
     observer.observe(button, { attributes: true, attributeFilter: ['class'] });
   });
 })();
+
+/* ---------------------------------------------------- Flick past a rail chapter
+ *
+ * Reported from a real phone: "swiping sideways won't move from one screen to the next
+ * — I can't tell if it's lag or a bug." Reproduced on an emulated Pixel 7 with real
+ * touch injection, and it is neither:
+ *
+ *   swipe 1   PROCESS rail   0 -> 304 px     chapter stays
+ *   swipe 2   PROCESS rail 304 -> 392 (end)  chapter stays
+ *   swipe 3   rail already at its end        chapter finally advances
+ *
+ * PROCESS and PLANS/WORKS each hold a horizontal rail with ~392px of scroll, and a
+ * thumb-swipe travels about 300px, so those chapters charge a two-swipe toll before
+ * they will release. app.js is doing exactly what it says — scroll the inner rail
+ * first, hand off to the chapter only once it is exhausted — which is right on a mouse
+ * and wrong on a phone, where that rail covers most of the screen and nothing marks it
+ * as a separate scroll surface. Swiping above the rail advances on the first try, so
+ * the navigation was never broken; the dead zone was just invisible.
+ *
+ * The rule added here is the one carousels have taught people for years: a slow drag
+ * scrolls the rail, a fast flick pages the container. Velocity, not position, is what
+ * separates them, so the rail keeps working for browsing and the chapter always
+ * releases when the visitor clearly means to leave.
+ *
+ * Navigation goes through `location.hash`, the site's own authoritative route — app.js
+ * treats `hash` as a source that may interrupt an in-flight transition, so this cannot
+ * strand the machine mid-move.
+ */
+(() => {
+  const root = document.documentElement;
+  const stage = document.querySelector('[data-scene-track]')?.parentElement
+    || document.querySelector('.scene-viewport');
+  if (!stage) return;
+
+  const chapters = [...document.querySelectorAll('.chapter')].map((c) => c.dataset.chapter);
+  if (chapters.length < 2) return;
+
+  // Only where a coarse pointer is the primary input. A mouse has a scrollbar and a
+  // wheel; it does not need this and should not get a surprise page turn.
+  const coarse = window.matchMedia('(pointer: coarse)');
+
+  // Two ways to qualify, because either one alone gets it wrong. Speed alone misses the
+  // slow, deliberate drag all the way across the screen — which is unmistakably "take me
+  // to the next screen" — and it cannot be calibrated honestly against injected input,
+  // where transport latency stretched a 310px gesture to 705ms and 0.44px/ms. Distance
+  // alone would hijack a long, careful browse of the rail. A gesture is a page turn if it
+  // is quick, OR if it crosses nearly half the screen; browsing a rail is neither.
+  const FLICK_SPEED = 0.5;        // px/ms
+  const FLICK_SCREEN_SHARE = 0.45; // of viewport width
+  const FLICK_DISTANCE = 90;      // px — floor, so a tap-slip can never qualify
+
+  let start = null;
+  let last = null;
+
+  // Touch events, not pointer events, and the difference is the entire defect.
+  //
+  // Instrumented on an emulated Pixel 7, one 310px flick across the PROCESS rail:
+  //
+  //   pointerdown@350 -> pointermove@328 -> pointercancel -> (nothing more)
+  //   touchstart@350  -> touchmove x9 ... @40 -> touchend@40
+  //
+  // The browser cancels the pointer stream 22px in, the instant it decides the gesture
+  // belongs to a scroller. Everything after that arrives only as touch events. app.js's
+  // swipe handler is bound to `pointerup`, which on a touch device never fires for any
+  // gesture that scrolls anything — so it never ran on the first two swipes, and the
+  // chapter released on the third only because by then the rail was at its end, nothing
+  // scrolled, no cancel was issued, and `pointerup` finally arrived. Reading the gesture
+  // from `pointercancel` does not rescue it either: at 22px of travel there is no flick
+  // to detect yet. The full gesture exists only in the touch stream.
+  const at = (event) => {
+    const t = event.changedTouches && event.changedTouches[0];
+    return t ? { x: t.clientX, y: t.clientY } : null;
+  };
+
+  document.addEventListener('touchstart', (event) => {
+    start = null;
+    last = null;
+    if (event.touches.length !== 1) return;             // a pinch is not a page turn
+    // Armed on every touch, not only over a horizontal rail. PLANS/WORKS covers its
+    // screen with a VERTICAL scroller (`data-inner-scroll`), so a rail-only guard left
+    // that chapter with nothing at all: no horizontal rail to match, and app.js's
+    // `pointerup` path already dead. Buttons and links are excluded so a tap on a
+    // control cannot be read as a page turn.
+    if (event.target.closest?.('a, button, input, select, textarea, [data-interactive]')) return;
+    const point = at(event);
+    if (!point) return;
+    start = {
+      x: point.x, y: point.y, time: performance.now(),
+      chapter: document.querySelector('.chapter.is-active')?.dataset.chapter,
+    };
+    last = { x: point.x, y: point.y, time: start.time };
+  }, { capture: true, passive: true });
+
+  document.addEventListener('touchmove', (event) => {
+    if (!start) return;
+    const point = at(event);
+    if (point) last = { x: point.x, y: point.y, time: performance.now() };
+  }, { capture: true, passive: true });
+
+  const finish = () => {
+    const from = start;
+    const end = last;
+    start = null;
+    last = null;
+    if (!from || !end) return;
+    if (document.querySelector('.index-panel.is-open')) return;
+
+    const dx = end.x - from.x;
+    const dy = end.y - from.y;
+    const elapsed = Math.max(end.time - from.time, 1);
+    const speed = Math.abs(dx) / elapsed;
+
+    if (Math.abs(dx) < FLICK_DISTANCE) return;
+    if (Math.abs(dx) < Math.abs(dy) * 1.3) return;   // a diagonal is not a page turn
+    const decisive = speed >= FLICK_SPEED
+      || Math.abs(dx) >= window.innerWidth * FLICK_SCREEN_SHARE;
+    if (!decisive) return;                           // a browsing drag stays in the rail
+
+    const current = document.querySelector('.chapter.is-active')?.dataset.chapter;
+    // Native scroll-snap and app.js both still work wherever the gesture is not eaten by
+    // a scroller. If either already moved the chapter during this gesture, the journey is
+    // done — navigating again here would skip a screen.
+    if (current !== from.chapter) return;
+    const index = chapters.indexOf(current);
+    if (index < 0) return;
+    const next = index + (dx < 0 ? 1 : -1);
+    if (next < 0 || next >= chapters.length) return;
+
+    location.hash = `#${chapters[next]}`;
+  };
+
+  document.addEventListener('touchend', finish, { capture: true, passive: true });
+  document.addEventListener('touchcancel', () => { start = null; last = null; },
+    { capture: true, passive: true });
+
+  // Marks the chapters that own a scrollable rail, so the stylesheet can show where the
+  // separate scroll surface is instead of leaving the visitor to discover it by failing.
+  const markRails = () => {
+    document.querySelectorAll('[data-horizontal-subscroll]').forEach((rail) => {
+      rail.classList.toggle('has-more', rail.scrollWidth > rail.clientWidth + 4);
+    });
+  };
+  markRails();
+  addEventListener('resize', markRails, { passive: true });
+  document.querySelectorAll('[data-horizontal-subscroll]').forEach((rail) => {
+    rail.addEventListener('scroll', () => {
+      rail.classList.toggle(
+        'at-end',
+        rail.scrollLeft >= rail.scrollWidth - rail.clientWidth - 4,
+      );
+    }, { passive: true });
+  });
+
+  root.classList.add('n2j-flick-ready');
+})();

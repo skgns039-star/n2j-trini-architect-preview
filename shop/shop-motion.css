@@ -1,0 +1,210 @@
+/* SHOP sub-page motion — N2J TRINI
+ * Built with design-motion-principles, weighted Jakub primary (production polish),
+ * Emil secondary (frequency gate). Jhey excluded: this is a commerce page for a
+ * studio whose locked system reads "silent, directional feedback; no bounce".
+ *
+ * Every rule animates transform, opacity or filter only. Nothing loops. Nothing
+ * pulses. Each entry states what it communicates — if it communicates nothing it is
+ * not here, which is the standard four earlier additions failed on this project.
+ */
+
+:root {
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+  --dur-fast: 180ms;
+  --dur-base: 420ms;
+}
+
+/* ------------------------------------------------------------- 1. Section entry
+ * Communicates: this section has arrived and is yours to read now. Occasional, so
+ * subtle and fast. Opacity plus a short lift — no blur: the display type is Hangul
+ * and a blur-in on Korean glyphs reads as a rendering fault, not a materialise.
+ */
+.js .reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.js .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* A ledger-row stagger was written here and removed: `.spec__row` is never a reveal
+ * target, so the delay had no entrance to attach to and landed on the row's only
+ * other transition — the hover. Hovering SCOPE stalled 140ms before responding.
+ * Hover feedback has to be immediate; the stagger was dead code with a live cost.
+ */
+
+/* ------------------------------------------------------------ 2. Product plate
+ * The banner plate is the page's one artifact. A slow settle on entry gives the eye
+ * somewhere to land before the copy is read; it happens once and never repeats.
+ */
+.js .banner__plate {
+  opacity: 0;
+  transform: scale(1.015);
+  transition:
+    opacity 620ms var(--ease-out),
+    transform 760ms var(--ease-out);
+}
+
+.js .banner__plate.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* A 900ms differential lift on the wordmark was written here and removed. It moved a
+ * glyph inside a decorative aria-hidden plate by 10px — imperceptible, and exactly the
+ * decorative-polish class this project has rejected four times. The plate's own fade
+ * is the page's single entrance. */
+
+/* ------------------------------------------------------------------- 3. Links
+ * Nav and spec rows: a directional gold rule, the same vocabulary the main site's
+ * header already uses. Origin-aware — it grows from the side the eye reads toward.
+ */
+.shop-header__nav a::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -.35rem;
+  height: 1px;
+  background: var(--point);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.shop-header__nav a:hover::after,
+.shop-header__nav a:focus-visible::after,
+.shop-header__nav a[aria-current="page"]::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* ------------------------------------------------------------------ 4. Spec rows
+ * Hovering a row marks which one you are reading. Colour only — a row that moves
+ * would drag the whole ledger's alignment with it.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .spec__row {
+    transition: background-color var(--dur-fast) var(--ease-out);
+  }
+
+  .spec__row:hover {
+    background: rgba(251, 250, 247, .5);
+  }
+
+  .spec__row:hover dt {
+    color: var(--point-deep);
+  }
+}
+
+/* --------------------------------------------------------------------- 5. CTA
+ * The arrow travels on hover — the one place a small movement carries meaning,
+ * because it points at what the click does. Press is instant and opacity-only.
+ */
+.cta span {
+  display: inline-block;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.cta:hover span {
+  transform: translateX(4px);
+}
+
+.cta--solid {
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.cta--solid:active {
+  transform: translateY(1px);
+}
+
+/* ------------------------------------------------------------ 6. Reduced motion
+ * Mandatory, and in the same file as the motion it governs. Final states are kept,
+ * so nothing depends on an animation having completed.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .js .reveal,
+  .js .reveal.is-visible,
+  .js .banner__plate,
+  .js .banner__plate.is-visible,
+  .js .banner__plate span,
+  .js .banner__plate.is-visible span {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    transition-delay: 0ms;
+  }
+
+  .shop-header__nav a::after,
+  .cta span,
+  .cta--solid,
+  .spec__row {
+    transition: none;
+  }
+
+  .cta:hover span,
+  .cta--solid:active {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------- 7. Banner entrance order
+ * The main site now enters every chapter media-first and lets the type follow ~170ms
+ * behind (styles/develop.css, measured). These sub-pages did the opposite: the plate
+ * faded over 620ms while the headline was painted instantly, so arriving here from a
+ * SHOP CTA reversed the order the visitor had just learned.
+ *
+ * Same beat, same keyframe direction as the site's `n2j-copy-arrive`. Delays are
+ * measured from first paint, not from a scroll — the banner is above the fold and
+ * `shop.js` settles it immediately, so nothing here waits on an interaction.
+ */
+@keyframes shop-copy-arrive {
+  0%   { opacity: 0; transform: translate3d(-10px, 0, 0); }
+  100% { opacity: 1; transform: none; }
+}
+
+.js .banner__index,
+.js .banner h1,
+.js .banner__meta {
+  animation: shop-copy-arrive 360ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.js .banner__index { animation-delay: 60ms; }
+.js .banner h1     { animation-delay: 130ms; }
+.js .banner__meta  { animation-delay: 200ms; }
+
+/* The plate led by 620ms, which put the headline nearly half a second behind on a page
+ * that has to state what it sells. 420ms keeps it first without making the copy wait.
+ *
+ * This re-declaration used to sit AFTER the reduced-motion block above. Nothing was
+ * broken — `.js .banner__plate.is-visible` outranks it, so reduce still measured
+ * `transition: none` — but a rule that only stays accessible because a sibling selector
+ * happens to win is one class change from breaking silently. It belongs before the
+ * cascade that is supposed to be able to override it.
+ */
+.js .banner__plate {
+  transition:
+    opacity 420ms var(--ease-out),
+    transform 560ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js .banner__index,
+  .js .banner h1,
+  .js .banner__meta {
+    animation: none;
+    animation-delay: 0ms;
+    opacity: 1;
+    transform: none;
+  }
+
+  .js .banner__plate {
+    transition: none;
+  }
+}

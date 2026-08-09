@@ -1,0 +1,772 @@
+/* Development layer — N2J TRINI architect preview
+ * Revision 5, after a Hallmark audit returned Critical 2 / Major 4 / Minor 8.
+ * Additive only, loaded after main.css. Delete this file and revert the two changed
+ * lines in app.js to return to the baseline exactly.
+ *
+ * Removed in this revision, all on audit findings:
+ *   - Unscoped `justify-content: center` on the WHY tab rail. Below 901px that rail
+ *     is an overflowing scroll container; centring it pushed the first tab outside
+ *     the scrollable range, so at 768 the active tab read "5한 비용" and no gesture
+ *     could recover it. Content loss. Now scoped to the column layout only.
+ *   - A `--tab-rule` indirection claiming to animate the tab's gold rule. main.css
+ *     already animated it with the same easing; the new rule lost on specificity and
+ *     changed nothing but the duration. Twelve lines of dead code with a comment
+ *     vouching for them.
+ *   - The h1 letter-spacing settle: animated a layout property, never fired on first
+ *     load because INTRO ships `is-active`, and travelled 0.425px per character.
+ *   - A 2px numeral shift carrying no information the colour and rule did not.
+ */
+
+/* ------------------------------------------------------------- 1. Tap targets
+ * Header utility controls are 44px tall but 25–35px wide. On desktop the boxes keep
+ * their authored widths and only the hit area grows, so the header's rhythm is
+ * unchanged. On mobile the boxes DO widen to 44px, which shifts the utility cluster
+ * up to 20px left at ≤900px — a real layout change, stated rather than claimed away.
+ */
+/* main.css:173 already gives `.utility-nav a` and `.index-utility a` position:
+ * relative, and `.index-utility a` gets no ::before below — so listing them here was
+ * dead. Only the three that actually need a containing block remain. */
+.header-auth a,
+.mobile-utility a,
+.mobile-utility button {
+  position: relative;
+}
+
+.header-auth a::before,
+.utility-nav a::before,
+.mobile-utility a::before,
+.mobile-utility button::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: -5px;
+}
+
+/* Above 1150px .utility-nav's gap is 24px, so 11px per side leaves 2px clearance
+ * and lifts the narrowest control (QNA, 25px) past 44px. */
+@media (min-width: 1151px) {
+  .utility-nav a::before {
+    inset-inline: -11px;
+  }
+}
+
+/* .header-auth shows one link at a time — guest and member states are mutually
+ * exclusive — so it has no sibling to collide with. */
+@media (min-width: 901px) {
+  .header-auth a::before {
+    inset-inline: -12px;
+  }
+}
+
+/* Between 901 and 1150px the gap tightens to 12px, capping the extension at 5px per
+ * side; CART and QNA land near 35px effective. Above the 24x24 minimum, below the
+ * 44x44 target. Closing it needs a wider gap or fewer links — a layout decision, so
+ * it is reported, not forced. */
+
+@media (max-width: 900px) {
+  .mobile-utility a,
+  .mobile-utility button,
+  .header-auth a {
+    min-width: 44px;
+    justify-content: center;
+  }
+
+  .mobile-utility a::before,
+  .mobile-utility button::before,
+  .header-auth a::before {
+    inset-inline: 0;
+  }
+}
+
+/* --------------------------------------------------- 2. PROCESS marker, reduced
+ * The marker runs on <animateMotion repeatCount="indefinite">. SMIL ignores the
+ * reduced-motion media query, so it kept looping — 332px per 900ms — while every CSS
+ * animation and video correctly stopped. main.css:673 already hides it under reduce
+ * but at (0,1,0) it loses to main.css:310. Matching that specificity is the whole
+ * fix; no JavaScript, nothing stranded off the path.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .chapter.is-active .process-curve__marker {
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------- 3. Press state
+ * Deliberately NOT gated behind (hover: hover) — touch is the one context where
+ * :active is the only affordance. Opacity only, no travel, one shared value.
+ */
+:root {
+  --press-opacity: .65;
+}
+
+.header-auth a:active,
+.utility-nav a:active,
+.mobile-utility a:active,
+.mobile-utility button:active,
+.index-toggle:active,
+.evidence-tabs button:active,
+[data-shop-option]:active,
+.process-node:active,
+.text-link:active,
+.about-consultation-cta:active {
+  opacity: var(--press-opacity);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-auth a:active,
+  .utility-nav a:active,
+  .mobile-utility a:active,
+  .mobile-utility button:active,
+  .index-toggle:active,
+  .evidence-tabs button:active,
+  [data-shop-option]:active,
+  .process-node:active,
+  .text-link:active,
+  .about-consultation-cta:active {
+    opacity: 1;
+  }
+
+  .menu-label {
+    transition: none;
+  }
+}
+
+/* --------------------------------------------- 4. WHY tab rail, narrow screens
+ * Pre-existing: below 901px main.css:542 turns the rail into a horizontal scroller
+ * with the scrollbar hidden and no fade, so the last label was sliced at the edge
+ * with nothing to say more existed. A narrower basis makes the cut a deliberate peek
+ * and an edge fade says the row continues.
+ */
+@media (max-width: 900px) {
+  .evidence-tabs {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  }
+
+  .evidence-tabs button {
+    flex-basis: 40%;
+    min-width: 40%;
+  }
+}
+
+/* Centring is safe ONLY here: at ≥901px the rail is `flex-direction: column` and
+ * fits, so this distributes the group vertically. Below 901px it is an overflowing
+ * row and centring would clip the first tab out of the scroll range. */
+@media (min-width: 901px) {
+  .evidence-tabs {
+    justify-content: center;
+  }
+}
+
+/* --------------------------------------------------------- 5. Contrast repair
+ * Measured with tools/measure_contrast.py, not judged by eye:
+ *   WHY tab, active   olive on near-white   3.83  FAIL (12px needs 4.5)
+ *   ABOUT CTA         white on olive        3.96  FAIL
+ *
+ * This block used to end "Everything else measured 5.07–17.02 and is untouched." That
+ * was false confidence: the 5.07–17.02 range is real, but it is the output of a tool
+ * whose target list was seven hardcoded selectors, none of which sampled `--point` as
+ * text. A later audit found 24 failing text uses. See the J1 section at the end of this
+ * file; the tool's targets have been widened so the same gap cannot reopen.
+ *
+ * The brand accent is NOT changed: `--point` #798645 keeps all 20+ decorative uses.
+ * This is one darker step on the same hue (72.0° → 72.5°, L 39.8% → 28.2%) — a tint
+ * ramp, not a new colour. Named for its depth, not a role, because it paints both
+ * text and a button surface.
+ */
+:root {
+  --point-deep: #566030;
+}
+
+.evidence-tabs button.is-current,
+.evidence-tabs button.is-current span {
+  color: var(--point-deep);
+}
+
+.about-consultation-cta {
+  background: var(--point-deep);
+}
+
+/* ----------------------------------------------------------- 6. INTRO hero crop
+ * The source carries baked-in black bars top and bottom; a small overshoot pushes
+ * them outside the plate. The horizontal bias lets the wireframe panels lead.
+ * The figure stays whole, per the owner's direction.
+ *
+ * Open and NOT claimed fixed: the source is 832x464 and is upscaled here, and the
+ * rendered face is malformed. Neither is reachable by cropping — both need a
+ * different or re-rendered asset, which is the owner's decision.
+ */
+.intro-hero-video {
+  object-position: 42% 50%;
+  transform: scale(1.05);
+}
+
+@media (max-width: 900px) {
+  .intro-hero-video {
+    object-position: 38% 50%;
+    transform: scale(1.08);
+  }
+}
+
+/* SHOP labels its footage "AI 제작 이미지 영상"; the hero is AI-generated too and
+ * carried no label, so screen one broke the site's own convention. The credit is
+ * markup in index.html — a ::after on .hero-composition was clipped twice, by that
+ * element's `overflow: hidden` and by the active chapter's `clip-path: inset(0)`.
+ *
+ * .intro-layout is a two-column grid, so a third child auto-placed into row 2 /
+ * column 1 and floated under the headline, ~100px away from the media it credits.
+ * Pinning it to the media column keeps the disclosure with the thing disclosed.
+ */
+/* The credit is a child of the plate, positioned INSIDE it — not a grid sibling.
+ * As a third grid child it added a row plus a 100.8px row-gap to `.scene-inner`,
+ * which is `height: 100%; overflow: hidden`. At 1366x768 and 1440x800 that pushed
+ * the credit past the clip edge, invisible with nothing to scroll it back — and
+ * `overflow: hidden` means a document-overflow scan reports 0 and never sees it.
+ * At 1440x900 it survived but landed 112px from the media, under the floating
+ * inquiry chips, reading as their caption instead.
+ *
+ * Inside the plate it cannot escape the container's height, and it sits on the
+ * thing it credits. Same placement SHOP already uses for its own caption.
+ */
+.intro-media-credit {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  padding: .35rem .6rem;
+  /* `--surface-white` does not exist in this build — that token name was carried in
+   * from another project, so the declaration was invalid, the plate computed to
+   * rgba(0,0,0,0), and an 11px label sat on moving video at 1.46 contrast at 390.
+   * The build's own caption convention is three lines away at main.css:243. */
+  background: rgba(242, 238, 215, .97);
+  font-size: 11px;
+  letter-spacing: .02em;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------- 7. Display tier
+ * The audit's largest standing typographic finding: chapter headlines rendered at
+ * 17px against 14px body — 3px apart, so the page had no display tier and the hero
+ * image was left carrying screen one alone.
+ *
+ * The cause is a shared token. `--title-size` feeds BOTH `h1, h2` (main.css:185) and
+ * `.chapter-status`, the header counter (main.css:163). Raising the token would have
+ * enlarged the header too — which is why this is not a token change. The headlines
+ * get their own scale; `--title-size` keeps its header job untouched.
+ *
+ * This is the other half of the benchmark bargain. All four observed sites put one
+ * artifact on screen one and let it carry the page, and that only works when the
+ * display type is sized to share the load — obys sets 80px. Here the hero asset is
+ * 832x464 with a malformed face and cannot carry anything; sizing the type moves the
+ * weight onto the words, which are specific and verified, and lets the footage
+ * recede to what it actually is: texture.
+ *
+ * Leading stays 1.45 and `word-break: keep-all` is inherited — Hangul needs both, and
+ * the benchmark's 1.0 display leading is Latin practice that would collide ascenders.
+ */
+/* rem endpoints with a `rem + vw` middle, so the display tier still responds to the
+ * reader's text-size preference. A pure-vw middle with px endpoints removed that
+ * entirely and hit its floor at exactly the widths where the imbalance is worst:
+ * 23px against 14px body is 1.64x, one step of an ordinary scale, not a display
+ * tier — and the hero plate occupies ~57-63% of the viewport at 390 and 768 against
+ * ~43% at 1440. The floor is raised so mobile gets a real tier too.
+ */
+:root {
+  --display-size: clamp(1.75rem, 1.1rem + 1.9vw, 2.4rem);
+}
+
+/* Short viewports: `.scene-inner` is `height: 100%; overflow: hidden`, so anything a
+ * larger headline pushes down is not merely below the fold — it is unreachable. On a
+ * 1366x768 laptop the ABOUT person switcher already sits past the clip edge in the
+ * published build; this tier added 11px to that. The width-based scale is capped by
+ * available height so it contributes nothing to the overflow.
+ *
+ * The underlying defect is main.css's, is present in `source/`, and is NOT fixed here
+ * — restructuring ABOUT's vertical rhythm is a redesign needing its own approval.
+ * This only guarantees the display tier does not make it worse.
+ */
+@media (max-height: 820px) {
+  :root {
+    --display-size: clamp(1.5rem, 0.95rem + 1.2vw, 1.85rem);
+  }
+}
+
+/* main.css:184 `.chapter.is-active .chapter__copy h2` (0,3,1) outranks a bare
+ * `.chapter__copy h2`, so tracking set at lower specificity applied to only two of
+ * six headlines. Matching the active-chapter selector keeps one value across the
+ * tier instead of three.
+ */
+.chapter__copy h1,
+.chapter__copy h2,
+.about-information-panel h2,
+.chapter.is-active .chapter__copy h1,
+.chapter.is-active .chapter__copy h2,
+.chapter.is-active .about-information-panel h2 {
+  font-size: var(--display-size);
+  letter-spacing: -.028em;
+}
+
+/* ------------------------------------------------- 8. Korean typography parity
+ * From the region audit's Step 4, measured with tools/audit_korean_typography.py
+ * across all six chapters. Two values were out of step with the other five; nothing
+ * else was touched.
+ *
+ * K1 — main.css:287 sets `.shop-product-detail > p` to line-height 1.5 at
+ * clamp(17px, 1.45vw, 25px). Every other Korean body block measures 1.70–1.72.
+ * Hangul carries no descender clearance at 1.5, so the glyphs sit tight against the
+ * next line at the largest size on the page.
+ *
+ * K2 — main.css:391 sets `.about-information-panel h2` to line-height 1.4, against
+ * 1.45 everywhere else. This is a systems correction, not a perceptual one: at 17px
+ * it moves 0.85px on a two-line headline. Stated plainly so this file's standard for
+ * "does this change anything" stays consistent with the standard used to delete four
+ * inert rules in the previous revision.
+ *
+ * A `text-wrap: balance` was added here and has been removed. The claim behind it —
+ * that ABOUT was the only chapter breaking unbalanced — was false: every headline in
+ * the build is hard-broken with `<br>`, so `balance` has nothing to balance anywhere,
+ * including main.css:183's site-wide declaration. The authored breaks are correct
+ * Korean practice and are deliberately left alone.
+ */
+/* Scoped: main.css:569 deliberately sets 14px/1.5 below 901px, and the rationale
+ * above concerns the largest size on the page, not the mobile one. An unscoped rule
+ * silently overrode an authored mobile value. */
+@media (min-width: 901px) {
+  .shop-product-detail > p {
+    line-height: 1.72;
+  }
+}
+
+.about-information-panel h2 {
+  line-height: 1.45;
+}
+
+/* -------------------------------------------------- 8. Reachability when clipped
+ * `.scene-inner` is `height: 100%; overflow: hidden`, so anything taller than the
+ * viewport is not below the fold — it is gone, with no scrollbar and no gesture.
+ * Measured across 22 frames: at 1366x768 and 1280x720 the ABOUT person switcher is
+ * inoperable, and in mobile landscape (844x390, 932x430) all seven PROCESS step
+ * buttons plus SHOP and PLANS controls are unreachable.
+ *
+ * app.js already has the mechanism: `verticalScrollFor()` recognises
+ * `[data-inner-scroll]` and gives it the wheel before advancing the chapter, and
+ * `verticalScrollCanMove()` hands the wheel back at the end of travel. develop.js
+ * marks a chapter only when it actually overflows, so nothing changes on the
+ * viewports that already fit and chapter navigation is untouched.
+ *
+ * `overscroll-behavior: contain` keeps a scroll from chaining out to the document.
+ */
+.scene-inner[data-inner-scroll] {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+/* Room for the last element to clear the bottom edge rather than butting against it. */
+.scene-inner[data-inner-scroll] {
+  padding-bottom: clamp(1.5rem, 4vh, 3rem);
+}
+
+/* ------------------------------------------------- 9. INTRO placeholder chrome
+ * These labels were composed for an empty plate. With the hero playing they sit on
+ * live footage and contradict it. `opacity: 0` alone left them in the accessibility
+ * tree, so a screen-reader user on a finished site was still told the media was
+ * missing; `visibility: hidden` removes them, delayed so the fade still reads.
+ */
+.hero-composition:has(.intro-hero-video.is-ready) .media-stage__top,
+.hero-composition:has(.intro-hero-video.is-ready) .media-stage__bottom,
+.hero-composition:has(.intro-hero-video.is-ready) .intro-media-mark {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 320ms ease, visibility 0s linear 320ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-composition:has(.intro-hero-video.is-ready) .media-stage__top,
+  .hero-composition:has(.intro-hero-video.is-ready) .media-stage__bottom,
+  .hero-composition:has(.intro-hero-video.is-ready) .intro-media-mark {
+    transition: none;
+  }
+}
+
+/* ========================================================================== *
+ * Chapter entrance — one media-led beat, all six chapters
+ *
+ * Measured before writing this (tools/measure_entrance_order.py, 1440x900, ms from
+ * the menu CTA click to the element crossing 0.85 effective opacity):
+ *
+ *   WHY N2J      media 188   headline 404   description 493   → type 216ms behind
+ *   SHOP         media 209   headline 209   description 209   → together
+ *   PROCESS      media 206   headline 292   description   5   → description first
+ *   PLANS/WORKS  media 214   headline 214   description 214   → together
+ *   ABOUT        media 217   headline  13   description  13   → type 204ms ahead
+ *
+ * Three different behaviours across six chapters, because PROCESS and ABOUT keep their
+ * copy outside `.scene-inner`'s direct children and so received no entrance at all —
+ * `.chapter.is-active .chapter__copy{opacity:1}` snapped them on in one frame — while
+ * WHY carried a bespoke 620ms/560ms clip reveal nothing else used. The lag the user
+ * reported is real and it is the WHY case; the underlying fault is that there was no
+ * agreed order to begin with.
+ *
+ * So the order is now authored rather than inherited: the media arrives first and the
+ * type follows it, on the same beat everywhere. Media leading is the deliberate choice —
+ * the artifact establishes the scene, then the sentence explains it. Motion is x-axis to
+ * match the site's existing `editorial-grid-*` vocabulary; no new direction is invented.
+ *
+ * design-motion-principles weighting: marketing/landing → Jakub primary, Emil secondary.
+ * Chapter changes are occasional, so a 360ms move inside a ~600ms cascade is within the
+ * production-polish band and adds no time — the site already spent 620-720ms here.
+ * ========================================================================== */
+
+@keyframes n2j-copy-arrive {
+  0%   { opacity: 0; transform: translate3d(-10px, 0, 0); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* The copy container is neutralised so it cannot act as a second, chapter-dependent
+ * ramp underneath the children. All type timing below is then absolute, not a product
+ * of whichever wrapper a given chapter happens to use. */
+.chapter.is-active .scene-inner .chapter__copy,
+.chapter.is-active .scene-inner > .chapter__copy {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+.chapter.is-active .scene-inner .eyebrow,
+.chapter.is-active .scene-inner .chapter__copy > h1,
+.chapter.is-active .scene-inner .chapter__copy > h2,
+/* ABOUT keeps its headline in `.about-information-panel`, not a `.chapter__copy`, which
+ * is why it was the one chapter still snapping its type on in a single frame. */
+.chapter.is-active .scene-inner .about-information-panel > h2,
+.chapter.is-active .scene-inner .chapter__description,
+/* No `>` chain here. PLANS/WORKS keeps its link in `.plans-project-detail`, not in a
+ * `.chapter__copy`, so a child combinator left "프로젝트 보기 →" and the DUCKFEET block
+ * painting at 0ms while the headline above them faded in over the next 320ms — the
+ * column assembled bottom-first, which is the exact inconsistency this section removes. */
+.chapter.is-active .scene-inner .text-link,
+/* The whole PLANS detail block, not just its link: the status line and the
+ * category / URL row sat outside every selector too and painted at 0ms with it. */
+.chapter.is-active .scene-inner .plans-project-detail {
+  animation: n2j-copy-arrive 360ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+/* The link is inside that block, so animating both would multiply the two ramps and
+ * push it past the beat it is supposed to share. The parent carries it. */
+.chapter.is-active .scene-inner .plans-project-detail .text-link {
+  animation: none;
+}
+
+.chapter.is-active .scene-inner .eyebrow            { animation-delay: 60ms; }
+.chapter.is-active .scene-inner .chapter__copy > h1,
+.chapter.is-active .scene-inner .chapter__copy > h2,
+.chapter.is-active .scene-inner .about-information-panel > h2 { animation-delay: 130ms; }
+.chapter.is-active .scene-inner .chapter__description { animation-delay: 200ms; }
+/* No `>` chain here. PLANS/WORKS keeps its link in `.plans-project-detail`, not in a
+ * `.chapter__copy`, so a child combinator left "프로젝트 보기 →" and the DUCKFEET block
+ * painting at 0ms while the headline above them faded in over the next 320ms — the
+ * column assembled bottom-first, which is the exact inconsistency this section removes. */
+.chapter.is-active .scene-inner .text-link,
+.chapter.is-active .scene-inner .plans-project-detail { animation-delay: 260ms; }
+
+/* WHY carried its own reveal at (0,4,1) — matched here so source order decides, and
+ * develop.css is loaded after main.css. Without this the chapter keeps its 620ms clip
+ * wipe and stays the outlier the measurement caught. */
+.chapter--why.is-active .scene-inner .why-copy > h2 {
+  animation: n2j-copy-arrive 360ms 130ms cubic-bezier(.22, 1, .36, 1) both;
+  clip-path: none;
+  letter-spacing: -.035em;
+}
+
+.chapter--why.is-active .scene-inner .why-copy > .chapter__description {
+  animation: n2j-copy-arrive 360ms 200ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter.is-active .scene-inner .eyebrow,
+  .chapter.is-active .scene-inner .chapter__copy > h1,
+  .chapter.is-active .scene-inner .chapter__copy > h2,
+  .chapter.is-active .scene-inner .about-information-panel > h2,
+  .chapter.is-active .scene-inner .chapter__description,
+  .chapter.is-active .scene-inner .text-link,
+  .chapter.is-active .scene-inner .plans-project-detail,
+  .chapter--why.is-active .scene-inner .why-copy > h2,
+  .chapter--why.is-active .scene-inner .why-copy > .chapter__description {
+    animation: none;
+    animation-delay: 0ms;
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+}
+
+/* ------------------------------------------------ PROCESS in mobile landscape
+ * The sweep flagged seven unreachable controls at 844x390 and 932x430, and the first
+ * attempt here hid the `.rail-index` dots on the argument that the step nodes were a
+ * working alternative. A Hallmark audit refuted that with measurements, correctly:
+ *
+ *   .process-detail          top 376, bottom 467, in a 390px viewport
+ *   .process-stage           scrollHeight 275 vs clientHeight 95, overflow hidden
+ *   ancestor scrollport      none — .scene-inner, .chapter, .scene-viewport all hidden
+ *   nodes past the clip      4 of 7 (01상담, 03기획, 05제작, 07완료) sliced mid-glyph
+ *
+ * So the dots were not the problem. The chapter was assigned 95px for content that needs
+ * 275px, and hiding the pagination only removed the evidence — the step description a tap
+ * updates was never reachable by any gesture in the first place.
+ *
+ * The cause is that `.process-layout` stacks head over stage. In landscape the head takes
+ * 161 of 332 available pixels and the stage inherits what is left. Width is the axis that
+ * is plentiful here, so the two go side by side instead: the head becomes a fixed
+ * left column and the stage takes the full height of the scene. The stage then has ~330px
+ * for a 126px rail, its detail panel and the dot row — which is why the dots come back.
+ *
+ * The head keeps its own scrollport as the guarantee, since its copy length is content and
+ * can grow; `overscroll-behavior: contain` stops that scroll from reaching the chapter
+ * track behind it.
+ */
+@media (max-height: 500px) and (orientation: landscape) {
+  .chapter--process .process-layout {
+    grid-template-columns: minmax(0, 290px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 0 clamp(16px, 2.5vw, 32px);
+    align-items: stretch;
+  }
+
+  .chapter--process .process-head {
+    grid-column: 1;
+    grid-row: 1;
+    align-content: start;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Without this the head kept main.css:297's `.7fr 1.3fr` + `gap: 8vw` INSIDE a
+     * 290px column. Bare `fr` floors at min-content, so the headline took ~150px, the
+     * 8vw gap took up to 154px, and the summary got what was left: 80px at 932x430,
+     * 29px at 1366x480, and 0px at 1920x480 — the copy column rendered as a ladder of
+     * single Hangul characters, or blank. main.css:583 already collapses this to one
+     * column below 901px, which is the only reason the 844x390 check passed and why
+     * the first measurement here missed it: it sampled the stage and never the head. */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  /* One column at 290px — the 2-up summary from main.css:584 would leave ~130px per
+   * cell and break 필요 자료 across three lines. */
+  .chapter--process .process-summary { grid-template-columns: minmax(0, 1fr); }
+
+  /* The side-by-side layout alone clears 844x390 and 1440x480, but at 932x430 the
+   * detail panel still ran 93px past the stage — its copy length is content and will
+   * keep varying. The scrollport is the guarantee that no step description can become
+   * unreachable again; `contain` stops that scroll reaching the chapter track behind. */
+  .chapter--process .process-stage {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 0;
+    padding-top: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* Reachable is not the same as visible at rest. At 926x428 and 932x430 the detail
+   * panel and the pager still sat below the clip and had to be scrolled to. An edge
+   * fade was tried and rejected: it cannot know whether the stage actually overflows,
+   * so at 844x390 (5px of overflow) and 1440x480 (none) it would have dimmed half of a
+   * fully visible 44px dot row to advertise a scroll that isn't there. Reclaiming the
+   * height instead makes the scrollport the guarantee it was meant to be rather than
+   * the normal way to read the chapter. */
+  /* 926x428 and 932x430 sit in a gap nothing covered: wider than main.css:587's 900px
+   * ceiling, so the stage was still using DESKTOP metrics — a 190px minimum rail and
+   * 26-48px of padding — inside a 358px box, while 844x390 got the compact rule and
+   * fit. Height, not width, is what is scarce here, so the compact arrangement applies
+   * across the whole landscape band. */
+  .chapter--process .process-stage {
+    padding: 12px 12px 10px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(104px, 1fr) auto auto;
+    gap: 6px;
+  }
+
+  .chapter--process .process-rail { grid-column: 1; }
+  .chapter--process .rail-index { grid-row: 3; justify-self: start; align-self: end; }
+
+  .chapter--process .process-rail,
+  .chapter--process .process-map { min-height: 104px; }
+
+}
+
+/* Below 385px of viewport height the chapter genuinely does not fit: a 7-step diagram,
+ * a description panel and a 44px pager need more room than a 568x320 or 780x360 window
+ * has, and measurement says so — 29px of stage overflow at 780x360, 135px at 568x320.
+ * Wrapping the pager was tried and made it worse, because the row it wraps into is an
+ * `auto` grid track and simply grew the content it was meant to shorten.
+ *
+ * So this band gets the honest treatment instead: shrink what can be shrunk, keep the
+ * scrollport, and — here only — say the scrollport exists. The edge fade was rejected
+ * for the fitting sizes because CSS cannot detect overflow, but 385px is measured to be
+ * below the point where any of these viewports fit, so the fade never advertises a
+ * scroll that isn't there. Above it, nothing fades and nothing needs to.
+ */
+/* Two thresholds, and they are deliberately different numbers. Compaction starts at
+ * 400px, where the budget first gets tight. The fade starts at 385px, which measurement
+ * puts below the point where any viewport in this band still fits — so the fade never
+ * appears over content that is fully visible. 844x390 sits between them: it compacts,
+ * it fits, and it does not fade. */
+@media (max-height: 400px) and (orientation: landscape) {
+  .chapter--process .process-rail,
+  .chapter--process .process-map { min-height: 84px; }
+
+  .chapter--process .process-detail p { font-size: 12px; }
+  .chapter--process .process-detail strong { font-size: 15px; margin: 3px 0; }
+}
+
+@media (max-height: 385px) and (orientation: landscape) {
+  .chapter--process .process-stage {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
+  }
+
+  .chapter--process .process-detail { padding-top: 8px; }
+  .chapter--process .process-detail strong { margin: 4px 0; }
+  .chapter--process .process-detail p { font-size: 13px; line-height: 1.5; }
+
+  /* Restored: the panel they page is reachable again, so the dots are a real control. */
+  .chapter--process .rail-index { display: flex; }
+}
+
+/* ------------------------------------------------- Chapter counter contrast
+ * `.chapter-status__number` (main.css:167) paints `--point` at 14px/400 on #fbfaf7:
+ * measured 3.96:1 against a 4.5:1 requirement. It is the "02 / 06" counter, on screen
+ * in every chapter at every width, and the earlier `--point-deep` pass covered 12px
+ * text and button surfaces but missed it. Its sibling `i` at 11px already uses
+ * `--muted` and passes at 5.92:1. Same hue, one step down, 6.47:1.
+ */
+.chapter-status__number {
+  color: var(--point-deep);
+}
+
+/* --------------------------------------- Fixed inquiry dock over ABOUT controls
+ * At 1440x900 the dock (`position: fixed`, bottom 24px, 44px tall → band 832-876)
+ * covered 79x36px of the `CONTINUITY 운영 체계` row, whose top is 831. `elementFromPoint`
+ * at the overlap centre returned 네이버 문의, so a click in that band opened an external
+ * chat instead of switching the panel — a fixed decoration eating a real control.
+ *
+ * The panel is vertically centred, so reserving the dock's height at its foot lifts the
+ * rail clear rather than adding a scroll. Only where the two-column ABOUT layout puts
+ * the rail under the dock's right-hand corner; below 901px the dock sits at 8-12px and
+ * the layout has already stacked.
+ */
+/* First attempt here added `padding-bottom: 76px` to the panel. Measurement showed why
+ * that could not work: `.about-shell` was ALREADY overflowing its scene by 113px at
+ * 1440x900, so the grid's `align-items: center` pins to start and extra padding pushes
+ * content further down, not up. It made the collision worse by 76px.
+ *
+ * The real cause is that ABOUT does not fit. `.scene-inner` reserves 86-108px at its
+ * foot — more than the dock's 68px reach — so nothing should ever land under the dock;
+ * that reserve was simply being consumed by the overflow. Reclaiming the chapter's own
+ * vertical budget is what clears the dock, and it stops ABOUT being silently clipped at
+ * a size the audit requires. */
+@media (min-width: 901px) {
+  .about-shell {
+    padding-block: clamp(16px, 2.5vh, 34px);
+  }
+
+  .about-information-panel {
+    gap: 14px;
+  }
+}
+
+/* ------------------------------------------ ABOUT rail under the dock at 320px
+ * n2: the fixed dock covers the `CONTINUITY 운영 체계` row at 320x568 at EVERY scroll
+ * offset — a 10px-step scan over the full 624px range found no position where the row
+ * is clickable. Clear from 320x640 upward, so this is scoped to the stacked layout.
+ *
+ * Correction to what this comment first claimed: the PANEL does not scroll — measured
+ * scrollHeight == clientHeight, 748/748. The scroller is `.about-shell.scene-inner`.
+ * The padding works indirectly, by extending that shell's scroll range so the row can
+ * travel above the dock band. Right outcome, wrong stated mechanism; a later reader
+ * trusting the original sentence would have looked for a scrollport that isn't there.
+ */
+@media (max-width: 900px) {
+  .about-information-panel {
+    padding-bottom: 76px;
+  }
+}
+
+/* ------------------------------------- `--point` as a text colour, sitewide (J1)
+ * The earlier contrast pass wrote "everything else measured 5.07–17.02 and is
+ * untouched". That range was real but it came from tools/measure_contrast.py, whose
+ * TARGETS list is seven hardcoded selectors — and not one of them samples a `--point`
+ * text use. Its PROCESS entry is `.process-node:not(.is-current)`, the passing state.
+ * The tool was right; the generalisation drawn from it was not.
+ *
+ * Measured on the rendered page: #798645 is 3.96:1 on the paper ground and 3.39:1 on
+ * `--sub`, against 4.5:1 for 11–16px text. It fails in 24 places across all six
+ * chapters, including `.process-node.is-current strong` — a 14px/500 control label —
+ * and every INPUT / RESULT / SCOPE and RESPONSIBILITY / HANDOVER / CONTINUITY term.
+ *
+ * This is NOT a brand-colour change and the lock holds: `--point` keeps every rule,
+ * mark, underline, marker and decorative fill it already paints. Only its use as
+ * readable text moves one step down the same hue, to the `--point-deep` #566030 that
+ * was measured at 6.75:1 and accepted for exactly this reason earlier in the project.
+ */
+/* Five selectors were removed from this list after a later audit measured them BEFORE
+ * and AFTER the rule at runtime: `.process-detail strong` (17px), `[data-plan-title]`
+ * (20px) and `.about-caption strong` (15px) were `--ink` #1b1d16 at ~15:1, and
+ * `.plans-info__index` and `.about-state-rail span` were `--muted` at ~5.9:1. None was
+ * a contrast failure. Listing them recoloured three primary reading titles — the step
+ * name, the project name, the person's name — from ink to brand accent under a change
+ * justified as contrast-only, which is not what the comment above describes and is not
+ * what an accent is for. Reverted; the accent stays a highlighter.
+ *
+ * `.about-state-rail span` also had a side effect: at (0,1,1) it outranked the inherited
+ * hover/focus colour from main.css:416, and below 900px the sibling `b` is display:none,
+ * so that tab lost its only colour response to hover. Gone with the revert.
+ *
+ * `.chapter.is-active .eyebrow` in main.css:182 is (0,2,0) and re-asserts `--point`, so
+ * the active eyebrow needs the matching specificity. The BASE `.eyebrow` deliberately
+ * stays `--muted`: making both the same colour flattened the active/inactive signal and
+ * turned main.css:181's colour transition into a no-op.
+ */
+.chapter.is-active .eyebrow,
+.process-mode,
+.process-node.is-current strong,
+.process-detail span,
+.shop-product-detail dt,
+.about-facts dt {
+  color: var(--point-deep);
+}
+
+/* The eleven the first pass missed. Same fault as the one it was written to fix, one
+ * level up: the target list sampled `:not(.is-current)` — the passing state — so in
+ * PLANS, SHOP and ABOUT the SELECTED item was the least legible thing in its rail,
+ * while the unselected siblings rendered in ink. In PROCESS the active node's `strong`
+ * was corrected to 6.53:1 and the `span` beside it, inside the same button, was left
+ * at 3.39:1. `.fixed-inquiry a b` is on screen in every chapter, on every page, at
+ * every width. */
+.plan-option.is-current > strong,
+.plan-option.is-current > span,
+.plan-option.is-current > small,
+.process-step.is-current > span,
+.evidence-panel__label,
+.shop-product-rail button.is-current,
+.shop-product-rail button.is-current span,
+.about-person-switch button.is-current,
+.about-counter b,
+.fixed-inquiry a b,
+.mobile-utility span {
+  color: var(--point-deep);
+}
+
+/* White on `--point` measured 3.96:1. The skip link is focus-only, which is exactly the
+ * moment a keyboard user needs to read it. */
+.skip-link {
+  background: var(--point-deep);
+}
+
+/* Pre-existing, unrelated to the accent: 9px #8e9183 on white is 3.22:1. `--muted` is
+ * the site's own secondary text colour and clears the floor at this size. */
+.shop-ambient__meta {
+  color: var(--muted);
+}

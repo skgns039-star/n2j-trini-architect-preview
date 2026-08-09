@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fbfaf7">
+<meta name="description" content="브랜드와 상품에 맞는 실무용 프롬프트를 설계합니다.">
+<title>PROMPT — N2J TRINI</title>
+<link rel="icon" href="../assets/logos/n2j-trini-header.png" type="image/png">
+<link rel="stylesheet" href="./shop.css?v=n2j-shop-20260809-07">
+<link rel="stylesheet" href="./shop-motion.css?v=n2j-shop-20260809-07">
+</head>
+<body>
+
+<header class="shop-header">
+  <div class="shop-header__brand">
+    <a class="shop-header__mark" href="../index.html" aria-label="N2J TRINI 홈으로">
+      <img src="../assets/logos/n2j-trini-header.png" alt="N2J TRINI" width="88" height="44">
+    </a>
+    <a class="shop-header__back" href="../index.html#shop-custom">← SHOP</a>
+  </div>
+  <nav class="shop-header__nav" aria-label="상품 종류">
+    <a href="./prompt.html" aria-current="page">프롬프트</a>
+    <a href="./coding.html">코딩</a>
+    <a href="./landing.html">랜딩 페이지</a>
+  </nav>
+</header>
+
+<main>
+  <section class="banner" aria-labelledby="page-title">
+    <div class="shell banner__grid">
+      <div>
+        <p class="banner__index">NATIVE SHOP / 01</p>
+        <h1 id="page-title">브랜드와 상품에 맞는<br>프롬프트를 설계합니다.</h1>
+        <!-- No lead paragraph. It carried `description`, from which the h1 above is
+             written, so the two differed by a single word at 51px and 18px, stacked —
+             an echo subhead on the first fold of the page that takes the money. The
+             source sentence still ships as the document description; what a buyer needs
+             that the headline cannot say is 제공 and 필요 자료, immediately below. -->
+        <div class="banner__meta">
+          <span><b>제공</b> 검토 가능한 프롬프트 문서</span>
+          <span><b>필요 자료</b> 목표·대상·기존 자료</span>
+        </div>
+      </div>
+      <div class="banner__plate" data-caption="PROMPT / N2J TRINI" aria-hidden="true">
+        <span>PROMPT</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="commerce" aria-labelledby="buy-title">
+    <div class="shell">
+      <div class="commerce__head">
+        <h2 id="buy-title">주문</h2>
+      </div>
+      <!-- 아임웹 쇼핑 위젯을 이 안에 붙여넣으세요. 이 프레임은 위젯 내부를 건드리지 않습니다.
+           슬롯이 비어 있는 동안에만 안내 문구가 보이고, 위젯을 넣으면 자동으로 사라집니다. -->
+      <div class="imweb-widget-slot" data-imweb-widget="prompt"></div>
+    </div>
+  </section>
+
+  <section class="spec" aria-labelledby="spec-title">
+    <div class="shell">
+      <h2 id="spec-title">무엇을 주고받는지</h2>
+      <dl>
+        <div class="spec__row"><dt>INPUT</dt><dd>목표·대상·기존 자료</dd></div>
+        <div class="spec__row"><dt>RESULT</dt><dd>검토 가능한 프롬프트 문서</dd></div>
+        <div class="spec__row"><dt>SCOPE</dt><dd>사용 맥락 설명문과 프롬프트 전달</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="close" aria-labelledby="close-title">
+    <div class="shell close__inner">
+      <h2 id="close-title" class="sr-only">문의</h2>
+      <p>필요한 내용을 알려주시면 가능한 범위를 먼저 안내합니다.</p>
+      <div class="close__actions">
+        <a class="cta cta--solid" href="#buy-title">쇼핑하기 <span aria-hidden="true">→</span></a>
+        <a class="cta cta--ghost" href="https://pf.kakao.com/_xmTYTX/chat"
+           target="_blank" rel="noopener noreferrer">카카오 문의</a>
+        <a class="cta cta--ghost" href="https://naver.me/GdT6y0Iu"
+           target="_blank" rel="noopener noreferrer">네이버 문의</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="shop-footer">
+  <div class="shell shop-footer__inner">
+    <span>N2J TRINI</span>
+    <span>확정 범위만 안내</span>
+  </div>
+</footer>
+
+<script src="./shop.js?v=n2j-shop-20260809-07"></script>
+</body>
+</html>

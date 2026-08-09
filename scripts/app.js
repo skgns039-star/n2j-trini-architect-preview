@@ -70,8 +70,26 @@ const exactSceneIndex = () => clampIndex(Math.round(stage.scrollLeft / Math.max(
 const isPreviewHost = () => ['localhost', '127.0.0.1', ''].includes(location.hostname);
 const interactiveSelector = 'a,button,input,textarea,select,label,summary,[role="button"],[contenteditable],[data-interactive],[data-no-chapter-nav],.cta,.menu-drawer,.state-rail,.works-viewer,.person-selector,.process-stage,.index-panel';
 const introVideo = document.querySelector('[data-intro-hero-video]');
-const mediaConfig = { introHeroVideo:{ src:'https://cdn.midjourney.com/video/d643c5f0-226f-4101-ac72-18f86498de10/0.mp4', type:'video/mp4', objectFit:'cover', objectPosition:'50% 50%', autoplay:true, muted:true, loop:true, playsInline:true } };
-if (introVideo) { introVideo.src = mediaConfig.introHeroVideo.src; Object.assign(introVideo.style, { objectFit:mediaConfig.introHeroVideo.objectFit, objectPosition:mediaConfig.introHeroVideo.objectPosition }); }
+// The INTRO hero pointed at a Midjourney CDN URL the browser refuses cross-origin
+// (ERR_BLOCKED_BY_RESPONSE.NotSameOrigin), so screen one's hero media never played
+// in preview or production. Now served locally from N2J's own asset.
+//
+// Not any local file: the six videos already in assets/ are client screen
+// recordings. shop-landing.mp4 in particular is Duckfeet Korea's launch notice,
+// complete with a wordmark, an expired 00:00:00 countdown and a painted CTA —
+// under reduced motion it freezes on frame 0, which would make a client's dead
+// promotion N2J's permanent opening statement. n2jtrini-main.mp4 is N2J's own:
+// a pencil-sketch spread of a commerce site being designed, no third-party mark,
+// no countdown, no CTA, no dated copy. Verified frame by frame across its 12.75s.
+// N2J's own asset, uncropped. A head-removed crop was tried and reverted at the
+// owner's direction: the figure is meant to be whole. The original file is used as
+// authored — no re-encode, no resize.
+const mediaConfig = { introHeroVideo:{ src:'./assets/videos/intro/n2jtrini-main.mp4', type:'video/mp4', objectFit:'cover', autoplay:true, muted:true, loop:true, playsInline:true } };
+// objectPosition is intentionally NOT set inline any more. An inline style beats
+// every stylesheet rule, which made the crop impossible to vary by viewport — and
+// the framing needs to differ: the desktop plate is landscape, the 390px plate is
+// nearly square. develop.css owns the crop.
+if (introVideo) { introVideo.src = mediaConfig.introHeroVideo.src; introVideo.style.objectFit = mediaConfig.introHeroVideo.objectFit; }
 
 function syncIntroVideo() {
   if (!introVideo) return;
@@ -378,9 +396,16 @@ function setupChapterNavigation() {
     }
 
     const imwebAction = event.target.closest('[data-imweb-action]');
-    if (imwebAction && false) {
+    // Was `imwebAction && false` — permanently off, so SHOPPING / CART / MY PAGE /
+    // QNA / 로그인 navigated for real. Those are Imweb routes; anywhere else they
+    // 404 and take the visitor out of the app, which also makes the index panel
+    // "disappear" because the page itself is gone. Both reported symptoms, one cause.
+    //
+    // The hrefs stay exactly as authored so the real site keeps working. Off an
+    // Imweb host the click is intercepted and explained instead.
+    if (imwebAction && !/(^|\.)imweb\.(me|com|io)$/i.test(location.hostname)) {
       event.preventDefault();
-      showToast(`${imwebAction.textContent.trim()}은 Imweb Adapter 연결 시 사이트 기능으로 이동합니다.`);
+      showToast(`${imwebAction.textContent.trim()}은 아임웹 사이트에서 동작합니다. 미리보기에서는 이동하지 않습니다.`);
       return;
     }
 
@@ -578,16 +603,31 @@ function setupShopViewer() {
   const layout = visual.closest('.shop-layout');
   const media = layout?.querySelector('.shop-gap-media');
   const video = media?.querySelector('[data-shop-video]');
+  // shop-coding.mp4 is REMOVED, not replaced. Frame inspection found it is a screen
+  // recording of a terminal exposing the OS account, the path to a keychain runner, a
+  // mode-600 config.json, and a discussion of MySQL root login-path and admin accounts.
+  // It was autoplaying on a public page. Treat anything visible in it as disclosed and
+  // rotate accordingly; this only stops further exposure.
   const mediaSources = {
     prompt:'./assets/videos/shop/shop-mobile.mp4',
-    coding:'./assets/videos/shop/shop-coding.mp4',
     landing:'./assets/videos/shop/shop-landing.mp4',
   };
   let activeId = 'prompt';
   const syncVideo = () => {
     if (!video) return;
     const source = mediaSources[activeId];
-    if (source && video.getAttribute('src') !== source) {
+    if (!source) {
+      // No clip for this option. Clear it rather than leaving the previous product's
+      // footage on screen, which would misrepresent what is being shown.
+      video.pause();
+      video.removeAttribute('src');
+      video.removeAttribute('poster');
+      video.load();
+      media?.setAttribute('hidden', '');
+      return;
+    }
+    media?.removeAttribute('hidden');
+    if (video.getAttribute('src') !== source) {
       video.pause();
       video.setAttribute('src', source);
       video.load();
@@ -785,7 +825,20 @@ function setupPlansViewer() {
       planScope.querySelector('[data-plan-title]').textContent = item.title;
       planScope.querySelector('[data-plan-status]').textContent = item.status;
       planScope.querySelector('[data-plan-category]').textContent = project.category;
-      planScope.querySelector('[data-plan-meta]').textContent = `${project.category} · ${project.verificationStatus}`;
+      // `verificationStatus` is an internal flag. Printing it raw put
+      // "WEBSITE · URL_VERIFIED" in front of visitors — a debug token read as
+      // editorial copy. The flag stays in the data; only its label is rendered.
+      // [data-plan-category] already prints project.category immediately to the
+      // left, so repeating it here rendered "WEBSITE  WEBSITE · VERIFIED LIVE".
+      // The verification claim is also already made in natural Korean directly
+      // above ("확인 가능한 실제 프로젝트 URL입니다."), so an English status badge
+      // restating it earns nothing. Render the live URL's host instead — that is
+      // information the sentence does not carry.
+      const host = (() => {
+        try { return new URL(project.url).host.replace(/^www\./, ''); }
+        catch { return ''; }
+      })();
+      planScope.querySelector('[data-plan-meta]').textContent = host;
       planScope.querySelector('[data-plan-link]').href = project.url;
       const image = viewer.querySelector('[data-plan-image]');
       const mobileSource = viewer.querySelector('[data-plan-mobile-source]');

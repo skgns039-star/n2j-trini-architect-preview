@@ -1,0 +1,214 @@
+/* SHOP sub-page — N2J TRINI
+ * Shares main.css's tokens and type so a product page reads as the same site.
+ * The commerce block itself is Imweb's widget; everything here is the frame around it.
+ */
+
+:root {
+  --main: #fbfaf7;
+  --sub: #f2eed7;
+  --point: #798645;
+  --point-deep: #566030;
+  --ink: #1b1d16;
+  --muted: #626653;
+  --line: rgba(27, 29, 22, .14);
+  --shell: min(1180px, calc(100% - clamp(2rem, 6vw, 6rem)));
+  --font-ko: "Pretendard", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --font-editorial: "Times New Roman", "Nanum Myeongjo", serif;
+  --press: .65;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  /* The header is sticky at 58px, so an in-page anchor landed its target underneath
+   * it — the 주문 heading and the top of the widget frame were both hidden after the
+   * primary CTA was clicked, on the page that takes the money. */
+  scroll-padding-top: 66px;
+  overflow-x: clip;
+}
+
+body {
+  overflow-x: clip;
+  margin: 0;
+  background: var(--main);
+  color: var(--ink);
+  font-family: var(--font-ko);
+  line-height: 1.72;
+  letter-spacing: -.012em;
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+img, video { display: block; max-width: 100%; }
+
+.shell { width: var(--shell); margin-inline: auto; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+
+:focus-visible { outline: 2px solid var(--point); outline-offset: 4px; }
+
+/* ------------------------------------------------------------------- header */
+.shop-header {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; padding: 0 clamp(1rem, 3vw, 2.5rem);
+  min-height: 58px;
+  background: rgba(251, 250, 247, .96);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+}
+
+.shop-header a, .shop-header button { min-height: 44px; display: inline-flex; align-items: center; }
+.shop-header__back { font-size: 12px; color: var(--muted); gap: .5rem; }
+.shop-header__back:hover { color: var(--point-deep); }
+/* The same lockup the main site's top-left uses — image mark plus a short gold rule
+ * that extends on hover (main.css:154-157), leftmost in the bar with the secondary link
+ * beside it exactly as `.header-brand-group` places 로그인. Scaled to 88x44 so it clears
+ * the 58px sub-page header; 104x52 would push the bar taller than the main site's. */
+.shop-header__brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.shop-header__mark { display: flex; align-items: center; gap: 8px; }
+.shop-header__mark img {
+  display: block; width: 88px; height: 44px;
+  object-fit: contain; object-position: left center;
+}
+.shop-header__mark::after {
+  content: ""; display: block; width: 16px; height: 1px;
+  background: var(--point); transition: width 220ms ease;
+}
+.shop-header__mark:hover::after { width: 30px; }
+
+/* Below 600px the bar carries the mark, a back link and three product names in ~290px
+ * of usable width. Wrapping made "← SHOP" and "랜딩 페이지" two-line and the row ragged,
+ * so the decorative rule goes first — it is the only element in the bar that carries no
+ * information — and the remaining gaps tighten. Nothing is removed. */
+.shop-header__back, .shop-header__nav a { white-space: nowrap; }
+
+@media (max-width: 599px) {
+  .shop-header { padding-inline: .75rem; gap: .5rem; }
+  .shop-header__brand { gap: 8px; }
+  .shop-header__mark::after { display: none; }
+  .shop-header__mark img { width: 72px; height: 36px; }
+  .shop-header__nav { gap: .7rem; font-size: 10.5px; }
+}
+.shop-header__nav { display: flex; gap: clamp(.75rem, 2vw, 1.5rem); font-size: 11px; letter-spacing: .04em; }
+.shop-header__nav a { color: var(--muted); position: relative; }
+/* -8px each side reached 16px into a 12px gap at 390 and 320, so adjacent hit areas
+ * overlapped and a tap in that band resolved by paint order. -5px keeps 2px clear. */
+.shop-header__nav a::before { content: ""; position: absolute; inset-block: 0; inset-inline: -5px; }
+.shop-header__nav a[aria-current="page"] { color: var(--point-deep); }
+.shop-header__nav a:active { opacity: var(--press); }
+
+/* ------------------------------------------------------------------- banner
+ * Paper ground with a single ruled index, not a photographic hero. The product is
+ * a service, so the type carries it — same bargain as the main site's screen one.
+ */
+.banner { position: relative; padding: clamp(3.5rem, 9vh, 7rem) 0 clamp(2.5rem, 6vh, 4rem); overflow: hidden; }
+.banner::after {
+  content: ""; position: absolute; inset: auto 0 0; height: 1px; background: var(--line);
+}
+.banner__grid { display: grid; gap: clamp(1.5rem, 4vw, 3rem); grid-template-columns: 1fr; }
+/* --point at 12px measures 3.79:1 on this ground — below the 4.5 floor, and it is the
+ * first text on every page. --point-deep is the same hue one step down at 6.47:1. */
+.banner__index { font-family: var(--font-editorial); font-size: 12px; letter-spacing: .18em; color: var(--point-deep); }
+.banner h1 {
+  margin: .6rem 0 0;
+  font-family: var(--font-ko);
+  font-size: clamp(2rem, 1.2rem + 2.6vw, 3.2rem);
+  font-weight: 400; line-height: 1.28; letter-spacing: -.03em;
+  text-wrap: balance;
+}
+.banner__meta { margin: 2rem 0 0; display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; font-size: 11px; letter-spacing: .04em; color: var(--muted); }
+.banner__meta b { font-weight: 500; color: var(--ink); }
+
+@media (min-width: 901px) {
+  .banner__grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: end; }
+}
+
+/* The product plate: a paper card with the service's own vocabulary, no stock imagery. */
+/* Below 901px this is a full-width single-column cell, so 4/3 made it 635px tall at
+ * 900px — a flat beige rectangle taller than the fold. Capped, and widened where the
+ * column is full-width so it reads as a plate rather than an unloaded image. */
+.banner__plate {
+  position: relative; aspect-ratio: 16 / 7; max-height: 42vh; background: var(--sub);
+  border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden;
+}
+
+@media (min-width: 901px) {
+  .banner__plate { aspect-ratio: 4 / 3; max-height: none; }
+}
+
+.banner__plate span {
+  font-family: var(--font-editorial);
+  font-size: clamp(2.4rem, 6vw, 4.4rem); letter-spacing: -.03em;
+  /* .16 alpha measured 1.32:1 — that is not restraint, it is invisible. */
+  color: rgba(27, 29, 22, .32);
+}
+.banner__plate::after {
+  content: attr(data-caption); position: absolute; left: 0; bottom: 0;
+  padding: .4rem .7rem; font-size: 10px; letter-spacing: .08em; color: var(--muted);
+  background: rgba(242, 238, 215, .97);
+}
+
+/* ------------------------------------------------------------ commerce slot
+ * Imweb's shopping widget is pasted inside. Nothing here styles its internals —
+ * the frame only reserves the space and labels it.
+ */
+.commerce { padding: clamp(2.5rem, 7vh, 5rem) 0; }
+.commerce__head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.commerce__head h2 { margin: 0; font-size: clamp(1.1rem, 1rem + .5vw, 1.5rem); font-weight: 400; letter-spacing: -.02em; }
+/* The slot explains itself only while it is empty. `:empty` stops matching the moment
+ * the Imweb widget is pasted in, so no scaffolding copy can ship by accident. */
+.imweb-widget-slot { min-height: 260px; }
+.imweb-widget-slot:empty {
+  border: 1px dashed var(--line);
+  display: grid; place-items: center; padding: 2rem;
+}
+.imweb-widget-slot:empty::after {
+  content: "아임웹 쇼핑 위젯 자리";
+  font-size: 12px; color: var(--muted); letter-spacing: .02em;
+}
+
+/* --------------------------------------------------------------- spec ledger
+ * A numbered vertical ledger, not three equal cards — the same anti-default the
+ * main site uses for its business rows.
+ */
+.spec { padding: clamp(2.5rem, 7vh, 5rem) 0; background: var(--sub); border-block: 1px solid var(--line); }
+.spec h2 { margin: 0 0 1.75rem; font-size: clamp(1.1rem, 1rem + .5vw, 1.5rem); font-weight: 400; letter-spacing: -.02em; }
+.spec__row { display: grid; gap: .35rem 1.5rem; padding: 1.15rem 0; border-top: 1px solid var(--line); }
+.spec__row:last-child { border-bottom: 1px solid var(--line); }
+.spec__row dt { font-family: var(--font-editorial); font-size: 11px; letter-spacing: .12em; color: var(--point-deep); }
+.spec__row dd { margin: 0; font-size: clamp(.95rem, .92rem + .2vw, 1.0625rem); }
+
+@media (min-width: 721px) {
+  .spec__row { grid-template-columns: 140px minmax(0, 1fr); align-items: baseline; }
+}
+
+/* --------------------------------------------------------------------- CTA */
+.close { padding: clamp(3rem, 8vh, 6rem) 0; }
+.close__inner { display: grid; gap: 1.5rem; }
+.close p { margin: 0; max-width: 42ch; color: var(--muted); }
+.close__actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+.cta {
+  min-height: 48px; display: inline-flex; align-items: center; gap: .6rem;
+  padding: 0 1.4rem; font-size: 13px; font-weight: 500; letter-spacing: -.01em;
+  border: 1px solid transparent; transition: background-color 180ms ease, color 180ms ease;
+}
+.cta--solid { background: var(--point-deep); color: #fff; }
+.cta--solid:hover { background: var(--ink); }
+.cta--ghost { border-color: var(--line); color: var(--ink); }
+.cta--ghost:hover { border-color: var(--point-deep); color: var(--point-deep); }
+.cta:active { opacity: var(--press); }
+
+/* ------------------------------------------------------------------ footer */
+.shop-footer { padding: 2rem 0 3rem; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+.shop-footer__inner { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; justify-content: space-between; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cta, .shop-header__nav a, .shop-header__back, .shop-header__mark::after { transition: none; }
+  .cta:active, .shop-header__nav a:active { opacity: 1; }
+}

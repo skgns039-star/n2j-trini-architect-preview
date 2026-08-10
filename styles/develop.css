@@ -785,3 +785,198 @@
     mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
   }
 }
+
+/* ============================================================================ *
+ * Mobile: a scene may not silently eat its own content
+ *
+ * Reported from a phone: the screen is cut off, the CTA sits on top of the copy.
+ * Every check I had said the site was clean, and they were all asking the wrong
+ * question. They measured `documentElement.scrollWidth - clientWidth`, which on this
+ * site is permanently 0: the shell is a locked 100dvh viewport and every scene is
+ * `overflow: hidden`, so content that does not fit is CLIPPED rather than overflowed.
+ * The document never scrolls, so the document never reports a problem. A render audit
+ * that walks the real clipping chain instead (tools/audit_mobile_render.py) found:
+ *
+ *   320x568 SHOP     SCOPE term and its value cut off 69px below .shop-visual
+ *   320x568 PROCESS  step description cut 35px, four step buttons cut 69px
+ *   360x640 SHOP     SCOPE cut 47px      375x667 SHOP  SCOPE cut 49px
+ *   844x390 WHY      evidence body cut 89px, its heading cut 31px
+ *   plus 188 painted overlaps, the dock and the SHOP CTA over headings and body copy
+ *
+ * All of it is height-driven — at 390x844 the same chapters fit perfectly. The rows are
+ * sized for a tall phone and there is nowhere for the overflow to go.
+ *
+ * So the scene gets somewhere to go. Below 901px it becomes `min-height: 100%` with a
+ * vertical scrollport instead of a fixed box, which is what the two chapters that
+ * already had inner scrollers were doing by hand. The horizontal chapter track is
+ * untouched — `overscroll-behavior-y: contain` keeps a vertical scroll from chaining
+ * into it — and on a screen where everything fits, nothing scrolls and nothing moves.
+ *
+ * This trades one screen per chapter for not destroying content. That is not a close
+ * call: a visitor cannot read what was never painted.
+ * ============================================================================ */
+@media (max-width: 900px) {
+  .chapter > .scene-inner {
+    /* `height: auto; min-height: 100%` was tried first and only moved the clip up one
+     * level: the scene grew to fit its content (608px in a 568px window) and `.chapter`,
+     * still a fixed 100dvh with `overflow: hidden`, cut the bottom 98px instead. To
+     * scroll, a box has to be CONSTRAINED and overflowing — not free to grow. */
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    /* Clears the fixed inquiry dock, which is 46px tall at 12px from the bottom and was
+     * painting over headings and body copy in every chapter at every phone size. */
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
+  /* Fixed heights inside a now-flexible scene would defeat it. These were the boxes the
+   * audit caught clipping their own text. */
+  .chapter--shop .shop-visual,
+  .chapter--shop .shop-product-detail { height: auto; min-height: 0; overflow: visible; }
+
+  .chapter--why .evidence-panel { height: auto; min-height: 0; overflow: visible; }
+}
+
+/* The WHY tab labels overran their own boxes by 14-17px at 320px — clipped mid-word with
+ * no indication, on the control that selects what the chapter is about. */
+@media (max-width: 360px) {
+  .evidence-tabs button { flex-basis: 62%; min-width: 62%; font-size: 11px; }
+}
+
+/* --------------------------------------------- The inquiry dock, on a phone
+ * 93 of the audit's 168 painted overlaps are this one element. It is a floating pill at
+ * `bottom: 12px; right`, and on a phone it lands in the middle of the reading column:
+ * hit-testing puts 카카오문의 on top of the ABOUT headline over 3256px², 네이버문의 over
+ * body copy and eyebrows in four other chapters. A floating control sitting on top of a
+ * sentence is exactly what "the CTA is overlapping the typography" describes.
+ *
+ * On mobile it becomes what it actually is — a persistent action bar. Full width, pinned
+ * to the bottom edge, opaque, with a rule above it, and the scene reserves its height.
+ * Content passing beneath a bottom bar while you scroll is a pattern every phone user
+ * already knows; a pill floating over a headline is not.
+ */
+@media (max-width: 900px) {
+  .fixed-inquiry {
+    right: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    border: 0;
+    border-top: 1px solid var(--line);
+    background: var(--main);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .fixed-inquiry a {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 52px;
+  }
+
+  .fixed-inquiry a + a { border-left: 1px solid var(--line); }
+
+  /* Reserve the bar plus a gap, so the last line of a chapter is never the line the bar
+   * is sitting on. 52px bar + 1px rule + safe area + breathing room. */
+  .chapter > .scene-inner {
+    /* 52px bar + 1px rule + 24px so the last line is never the line the bar sits on.
+     * At 76px the PROCESS description still ended up under the bar on a 568px screen
+     * with nothing left to scroll. */
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+}
+
+/* The PROCESS pager is 7 x 44px plus gaps — 356px of row inside a 282px column at 320px
+ * wide, so its last two dots were cut off by the stage with no way to reach them.
+ *
+ * Wrapping was tried first and was worse: main.css:587 gives the pager a fixed 28px grid
+ * track, so a two-line row spilled straight onto the step description — 52 of the audit's
+ * overlaps, all caused by that one declaration. Shrinking the dots was the other option
+ * and would have put the touch target under 44px on the site's own standard.
+ *
+ * So the pager scrolls sideways, like the rail it pages. Full-size targets, one line,
+ * nothing spilling into the panel below. */
+@media (max-width: 420px) {
+  .chapter--process .rail-index {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  }
+
+  .chapter--process .rail-index::-webkit-scrollbar { display: none; }
+  .chapter--process .rail-index button { flex: 0 0 auto; }
+}
+
+/* The clip moved inward, not away. With the scene scrollable, the boxes that still cut
+ * their own content are the stages themselves: `.process-stage` and `.value-rail` are
+ * fixed-height with `overflow: hidden`, AND every active media stage carries
+ * `clip-path: inset(0)` from main.css:119 — which clips to the border box whatever
+ * `overflow` says, so relaxing overflow alone changed nothing. On a phone these become
+ * ordinary blocks and let the scene's scrollport do the work.
+ *
+ * `.process-rail` keeps its horizontal scroll: the 720px map is meant to pan sideways.
+ * Only the vertical clipping goes.
+ */
+@media (max-width: 900px) {
+  .chapter--process .process-stage,
+  .chapter--why .value-rail {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  /* main.css:587 gives the pager a 28px track while its dots are 44px tall, and
+   * main.css:332 pins the row to `align-self: end` — so the extra 16px grew UPWARD,
+   * straight through the step description. Measured at 360x640: dots 493-537, the
+   * description 482-503, ten pixels of overlap on every phone width. The track sizes to
+   * what it holds now. */
+  .chapter--process .process-stage {
+    grid-template-rows: minmax(126px, auto) auto auto;
+  }
+
+  .chapter.is-active .chapter--process .process-stage,
+  .chapter.is-active .chapter--why .value-rail,
+  .chapter--process.is-active .process-stage,
+  .chapter--why.is-active .value-rail {
+    clip-path: none;
+  }
+
+  /* The rail keeps its VERTICAL clip. Relaxing it here was a mistake made one edit ago:
+   * the seven curve nodes are absolutely placed and their boxes hang below the 126px
+   * rail, so `overflow-y: visible` dropped them straight onto the step description —
+   * 52 of the audit's remaining overlaps, all of them mine. Only the stage above stops
+   * clipping; the rail pans sideways and contains its own nodes, as it always did. */
+  .chapter--process .process-rail { overflow-x: auto; overflow-y: hidden; }
+}
+
+/* At 320px the header's four groups do not fit: the 로그인 link lands on top of the
+ * chapter number in the mobile utility cluster. The number is duplicated — the same
+ * value is already in `.chapter-status__number` — so the mobile copy is what gives way. */
+@media (max-width: 340px) {
+  .mobile-utility > span[data-mobile-number] { display: none; }
+  .header-brand-group { gap: 6px; }
+}
+
+/* Two `1fr` tracks were still compressing their own content on a phone. `1fr` means
+ * "take the leftover space", so on a short screen the stage row shrank below what it
+ * held and — now that it no longer clips — pushed its content out through the scene's
+ * bottom padding and under the action bar, WITHOUT growing scrollHeight, so the
+ * scrollport had nothing to scroll. Measured at 320x568: scene scrollHeight 510 ==
+ * clientHeight 510, while the pager sat at 551. Content-sized rows let the scene grow,
+ * which is what makes the scrollport real.
+ */
+@media (max-width: 900px) {
+  .chapter--process .process-layout { grid-template-rows: auto auto; }
+  .chapter--shop .shop-layout { grid-template-rows: auto auto auto; }
+
+  /* `.media-stage__top` is absolutely positioned over its stage. That is right when the
+   * stage is a fixed-height plate and wrong once it sizes to its content: the
+   * "PRICE / AFTER CONSULTATION" label landed on the product's own description. */
+  .chapter--shop .shop-visual .media-stage__top,
+  .chapter--shop .shop-visual .media-stage__bottom {
+    position: static;
+  }
+}

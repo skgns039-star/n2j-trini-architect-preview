@@ -980,3 +980,55 @@
     position: static;
   }
 }
+
+/* ------------------------------------------------ SHOP media, when there is none
+ * On a real phone this rendered as a grey box with a play button on LANDING, and as the
+ * PREVIOUS product's frame on CODING — the two failures the no-source branch in app.js
+ * exists to prevent. The JavaScript was correct; the CSS defeated it.
+ *
+ * `media.setAttribute('hidden', '')` only supplies a DEFAULT `display: none`, and
+ * main.css:275 sets `display: flex` on `.shop-gap-media` explicitly, which wins. The
+ * element stayed laid out with an empty `<video>` inside it, and the in-app browser drew
+ * its own broken-media placeholder. An attribute that any `display` declaration silently
+ * overrides is not a way to hide something.
+ */
+.shop-gap-media[hidden] {
+  display: none;
+}
+
+/* ==================== From real-device screenshots (Galaxy, in-app browser) ==================== */
+
+/* 1. PLANS: a decorative panel painting on top of the copy.
+ * `.chapter--plans::after` (main.css:105) is `left:19%; width:43%` of translucent paper —
+ * texture behind a wide desktop layout. At 360px those percentages resolve to x 68-223,
+ * which is the middle of the reading column, and it rendered as a beige rectangle sitting
+ * over "WEBSITE / SELECTED WORK" and the headline. Percentage-positioned decoration does
+ * not survive a narrow viewport; it stops being background and becomes an object.
+ */
+@media (max-width: 900px) {
+  .chapter--plans::after { display: none; }
+}
+
+/* 2. PLANS: the rail cards read as sliced.
+ * At ≤900px the card becomes a 58px single-row grid, but it keeps `align-items: end` and
+ * the desktop paddings from main.css:342-344 — 4px under the title, 10px under the label.
+ * Measured: the three cells land on tops 111 / 109 / 103, so "01", "DUCKFEET" and
+ * "WEBSITE" sit on three different baselines jammed against the card's bottom edge, with
+ * the top half of the card empty. Centred, on one baseline, it reads as a card again.
+ */
+@media (max-width: 900px) {
+  .plan-option { align-items: center; }
+  .plan-option strong,
+  .plan-option small { padding-block: 0; align-self: center; }
+  .plan-option span { align-self: center; }
+}
+
+/* 3. SHOP: the media caption wrapped to three lines.
+ * `.shop-gap-meta` is two equal columns inside a plate that is `min(44vw, 220px)` wide, so
+ * at 360px each column is ~79px and "제품 화면 미리보기" broke across three lines next to a
+ * CTA on one. The row stacks below 560px, where two columns stopped fitting.
+ */
+@media (max-width: 560px) {
+  .shop-gap-meta { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .shop-gap-caption { justify-content: flex-start; text-align: left; }
+}

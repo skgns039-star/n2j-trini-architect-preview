@@ -1250,6 +1250,265 @@
   .chapter > .scene-inner { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
 }
 
+/* ================================================================================
+ * MOBILE VERTICAL FLOW — Blueprint 2026-08-11, concept C (owner-approved)
+ *
+ * The horizontal scene track proved uncontrollable on phones, so ≤900px becomes ONE
+ * vertical document. `data-flow="vertical"` is stamped on <html> by an inline snippet
+ * before first paint and kept current by app.js on the 900px matchMedia boundary; the
+ * desktop code path is untouched — every rule here is double-gated by the attribute
+ * AND the media query, so >900px can never see it.
+ *
+ * Structure: the fixed scene viewport becomes static document flow, the flex track a
+ * block, and each chapter a content-sized section. The chapter scrollports from the
+ * earlier mobile repair become unnecessary — the document itself is the scrollport.
+ *
+ * Hero (concept C): the intro chapter is a 175svh runway. Inside it the intro layout
+ * is a sticky frame; the video plate starts at frame height (cover, maximized) and —
+ * driven by --hero-p (0→1, set by a passive scroll listener in app.js) — settles to
+ * the source's own 832:464 full frame while the brand copy and the consultation CTA
+ * rise in beneath it. With no JS, --hero-p falls back to 1: the settled state,
+ * everything visible, native scroll — the page degrades to concept B, not to a
+ * broken pin.
+ * ================================================================================ */
+@media (max-width: 900px) {
+  /* main.css:29 locks the root (`html,body { height:100%; overflow:hidden }`) — the
+   * exact lock the horizontal engine needed and the vertical document must not have.
+   * Three measured lessons live in this one rule:
+   *   1. X must not be visible — stray right edges inside the horizontal sub-rails
+   *      widened the layout viewport to 437px on a 390px phone (MENU sliced off).
+   *   2. BODY must stay `overflow: visible` — ANY non-visible overflow on body makes
+   *      body the sticky containment scrollport instead of the viewport, and the hero
+   *      pin silently never engages (the Hallmark audit found a full blank viewport
+   *      where the settled frame should have held).
+   *   3. The X-clip therefore lives on the ROOT element only, where overflow is
+   *      applied to the viewport itself and sticky still tracks it. (`clip` on one
+   *      axis with `auto` on the other computes back to `hidden`, so on html the
+   *      distinction is moot — on body it is fatal, see 2.) */
+  html[data-flow="vertical"] {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+  }
+
+  html[data-flow="vertical"] body {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  /* X-leaks are fenced HERE, with `clip`: the sub-rails' stray right edges must not
+   * widen the mobile layout viewport (437px on a 390px phone, page zoomed out), but a
+   * scroll-container value anywhere above the hero would capture its sticky pin.
+   * `overflow-x: clip` is the one value that clips without becoming a scrollport. */
+  html[data-flow="vertical"] .site-shell {
+    height: auto;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  html[data-flow="vertical"] .scene-viewport {
+    position: static;
+    height: auto;
+    margin-top: var(--header-h);
+    overflow: visible;
+    scroll-snap-type: none;
+    touch-action: auto;
+  }
+
+  html[data-flow="vertical"] .scene-track { display: block; height: auto; }
+
+  html[data-flow="vertical"] .chapter {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    scroll-snap-align: none;
+    scroll-margin-top: var(--header-h);
+  }
+
+  html[data-flow="vertical"] .chapter > .scene-inner {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    /* Section rhythm: the inquiry bar no longer needs a per-scene reservation on
+     * every chapter — only the last one, which it actually sits over at rest. */
+    padding-bottom: 72px;
+  }
+
+  html[data-flow="vertical"] .chapter--about > .scene-inner {
+    padding-bottom: calc(124px + env(safe-area-inset-bottom));
+  }
+
+  /* Horizontal-only chrome. */
+  html[data-flow="vertical"] .chapter-edge { display: none; }
+
+  /* ------------------------------------------------ hero runway + sticky frame */
+  html[data-flow="vertical"] .chapter--intro { height: 175svh; }
+
+  /* The frame is height:auto and does NOT clip: at p=0 the copy sits just below the
+   * viewport-height video (below the fold, opacity 0 — invisible but never clipped
+   * away), and the scrub pulls it up as the video settles. A fixed-height clipping
+   * frame was tried first and the render audit correctly read it as content loss:
+   * a clipped box with no scrollable clipper is indistinguishable from a defect. */
+  html[data-flow="vertical"] .chapter--intro .intro-layout {
+    position: sticky;
+    top: var(--header-h);
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    padding: 0 0 24px;
+    gap: 0;
+    overflow: visible;
+  }
+
+  html[data-flow="vertical"] .chapter--intro .hero-composition {
+    order: -1;
+    position: relative;
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+    align-self: stretch;
+    justify-self: auto;
+    /* 55.77vw = 464/832 — the full frame. (1-p)·frame-height + p·full-frame. */
+    height: calc((1 - var(--hero-p, 1)) * (100svh - var(--header-h)) + var(--hero-p, 1) * 55.77vw);
+  }
+
+  html[data-flow="vertical"] .chapter--intro .intro-hero-video {
+    object-fit: cover;
+    object-position: 50% 50%;
+  }
+
+  /* The is-active entrance animations fill forwards to opacity 1 — they would beat
+   * the scrub-driven reveal and print the copy over the cover-state footage, the
+   * exact defect the 844x390 audit graded Major. The hero owns its own choreography.
+   * The exception has to reach the CHILD ramps too: the J1 type system at :441-463
+   * neutralises the copy container at (0,4,0) and animates eyebrow/h1/description/
+   * text-link individually, so both the container rule and the child rules are
+   * re-neutralised here at higher specificity. */
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner > .chapter__copy,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner > .media-stage,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .eyebrow,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy > h1,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy > h2,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__description,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .text-link {
+    animation: none;
+  }
+
+  /* Rendered proof beat intention here once already: the (0,4,0) neutraliser at :441
+   * pinned the copy to `opacity: 1` and the scrub reveal silently lost the cascade.
+   * Both reveal targets now carry the same `.is-active .scene-inner` chain so they
+   * outrank it. The CTA ramp starts at p=.375 (1.6p−.6) — the audit measured the old
+   * 2p−1 ramp leaving the buttons ghost-grey through most of the settle. */
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cta {
+    --hero-reveal: clamp(0, var(--hero-p, 1) * 1.6 - 0.6, 1);
+    opacity: var(--hero-reveal);
+    transform: translateY(calc((1 - var(--hero-reveal)) * 14px));
+    padding-right: var(--safe-right);
+    padding-left: var(--safe-left);
+  }
+
+  html[data-flow="vertical"] .chapter--intro .chapter__copy { margin-top: 18px; }
+
+  html[data-flow="vertical"] .vflow-cta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  html[data-flow="vertical"] .vflow-cta a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 56px;
+    border: 1px solid var(--line);
+    background: var(--main);
+    font-size: 13px;
+    color: var(--ink);
+    text-decoration: none;
+    transition: transform 160ms cubic-bezier(.22, 1, .36, 1), background 200ms ease;
+  }
+
+  html[data-flow="vertical"] .vflow-cta a b { font-weight: 600; color: var(--point-deep); }
+  html[data-flow="vertical"] .vflow-cta a:active { transform: scale(.98); background: var(--sub); }
+  html[data-flow="vertical"] .vflow-cta a:focus-visible { outline: 2px solid var(--point); outline-offset: 2px; }
+
+  /* Landscape phones: a pinned scrub has no room — the settled 55.77vw plate alone
+   * can exceed the viewport. The hero renders as the settled static state (concept
+   * B), full frame at its own ratio, copy and CTA in normal flow. Same shape the
+   * reduced-motion contract uses. */
+  @media (orientation: landscape) {
+    html[data-flow="vertical"] .chapter--intro { height: auto; }
+    html[data-flow="vertical"] .chapter--intro .intro-layout {
+      position: static;
+      height: auto;
+      overflow: visible;
+      padding-top: 14px;
+    }
+    /* Height-capped: at 55.77vw the frame alone is taller than a landscape phone's
+     * viewport, and the audit's first screen was a wordless image slab. Sized from
+     * the available height instead, centered, so the headline shares screen one. */
+    html[data-flow="vertical"] .chapter--intro .hero-composition {
+      height: auto;
+      aspect-ratio: 832 / 464;
+      width: min(100%, calc((100svh - var(--header-h) - 110px) * 1.7931));
+      margin-inline: auto;
+    }
+    /* The reveal ramp was raised to (0,5,1) to beat the type neutraliser — these
+     * static-state overrides must sit at the same altitude or landscape screen one
+     * renders its headline at the ramp's p=0 floor: present, hit-testable, invisible. */
+    html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy,
+    html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cta,
+    html[data-flow="vertical"] .chapter--intro .chapter__copy,
+    html[data-flow="vertical"] .chapter--intro .vflow-cta {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Short portrait screens (320x568 class): the settled CTA row rested at 510-566
+   * while the fixed inquiry dock occupies 515-568 — two identical CTA surfaces in a
+   * pixel-level collision. The hold clears the dock instead. */
+  @media (max-height: 640px) and (orientation: portrait) {
+    html[data-flow="vertical"] .chapter--intro .intro-layout {
+      padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* Reduced motion: no pin, no scrub, no reveal choreography — the settled state,
+ * statically. The runway collapses so there is no empty scroll distance. */
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  html[data-flow="vertical"] .chapter--intro { height: auto; }
+  html[data-flow="vertical"] .chapter--intro .intro-layout {
+    position: static;
+    height: auto;
+    overflow: visible;
+    padding-top: 14px;
+  }
+  html[data-flow="vertical"] .chapter--intro .hero-composition {
+    height: auto;
+    aspect-ratio: 832 / 464;
+  }
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cta,
+  html[data-flow="vertical"] .chapter--intro .chapter__copy,
+  html[data-flow="vertical"] .chapter--intro .vflow-cta {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* The render audit's eight remaining overlaps were one disease in three chapters: an
  * over-constrained scene grid. The scene is a fixed `height: 100%` box, and inside it the
  * `auto` rows from the earlier fix still resolved to the LEFTOVER space, not to their
@@ -1271,6 +1530,11 @@
   .chapter--shop .shop-layout { grid-template-rows: max-content max-content max-content; }
   .chapter--why .why-layout { grid-template-rows: max-content max-content; }
 }
+
+/* The CTA block only exists in the vertical flow; on the desktop grid it must not
+ * become a third auto-placed grid child (the intro credit already taught that lesson
+ * at :216-218). Hidden everywhere, shown by the vertical-flow section below. */
+.vflow-cta { display: none; }
 
 /* Landscape keeps the corner pill, and the pill sits exactly where the WHY evidence
  * caption sits — bottom-right. At 932x430 the two inquiry links and the next-chapter

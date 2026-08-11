@@ -1049,16 +1049,30 @@ function setupIntro() {
   const hide = (converge = true) => {
     clearTimeout(state.introTimer);
     if (converge && logo && headerLogo && !reducedMotion.matches) {
+      // Match the RENDERED GLYPH, not the boxes. Both images are `object-fit: contain`,
+      // and the header's box is 104x52 around a square 500x500 source — so the glyph
+      // fills 52x52 of it, not 104. Scaling by box width therefore landed the wordmark at
+      // roughly twice the header logo's size, in the same position: the "same place,
+      // different size" the owner saw. Contain-fit both, then compare like with like.
+      const headerImg = headerLogo.querySelector('img') || headerLogo;
+      const contain = (el, box) => {
+        const nw = el.naturalWidth || box.width;
+        const nh = el.naturalHeight || box.height;
+        if (!nw || !nh) return box.width;
+        return Math.min(box.width, box.height * (nw / nh));
+      };
       const from = logo.getBoundingClientRect();
-      const to = headerLogo.getBoundingClientRect();
+      const to = headerImg.getBoundingClientRect();
+      const fromGlyph = contain(logo, from);
+      const toGlyph = contain(headerImg, to);
       const x = (to.left + to.width / 2) - (from.left + from.width / 2);
       const y = (to.top + to.height / 2) - (from.top + from.height / 2);
-      const scale = Math.min(1, to.width / Math.max(1, from.width));
+      const scale = Math.min(1, toGlyph / Math.max(1, fromGlyph));
       gate.style.setProperty('--intro-target-x', `${x}px`);
       gate.style.setProperty('--intro-target-y', `${y}px`);
       gate.style.setProperty('--intro-target-scale', String(scale));
       gate.classList.add('is-converging');
-      state.introTimer = setTimeout(() => gate.classList.add('is-hidden'), 900);
+      state.introTimer = setTimeout(() => gate.classList.add('is-hidden'), 520);
     } else gate.classList.add('is-hidden');
     try { sessionStorage.setItem(key, '1'); } catch {}
   };
@@ -1082,10 +1096,10 @@ function setupIntro() {
   let cursor = 0;
   const typeNext = () => {
     text.textContent = word.slice(0, cursor += 1);
-    if (cursor < word.length) state.introTimer = setTimeout(typeNext, 120);
-    else state.introTimer = setTimeout(hide, 3000);
+    if (cursor < word.length) state.introTimer = setTimeout(typeNext, 78);
+    else state.introTimer = setTimeout(hide, 420);
   };
-  state.introTimer = setTimeout(typeNext, 280);
+  state.introTimer = setTimeout(typeNext, 160);
   addEventListener('error', hide, { once:true });
 }
 

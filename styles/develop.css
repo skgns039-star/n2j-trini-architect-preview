@@ -169,13 +169,13 @@
  * text. A later audit found 24 failing text uses. See the J1 section at the end of this
  * file; the tool's targets have been widened so the same gap cannot reopen.
  *
- * The brand accent is NOT changed: `--point` #798645 keeps all 20+ decorative uses.
+ * The brand accent is NOT changed: `--point` #141414 keeps all 20+ decorative uses.
  * This is one darker step on the same hue (72.0° → 72.5°, L 39.8% → 28.2%) — a tint
  * ramp, not a new colour. Named for its depth, not a role, because it paints both
  * text and a button surface.
  */
 :root {
-  --point-deep: #566030;
+  --point-deep: #000000;
 }
 
 .evidence-tabs button.is-current,
@@ -248,7 +248,7 @@
    * from another project, so the declaration was invalid, the plate computed to
    * rgba(0,0,0,0), and an 11px label sat on moving video at 1.46 contrast at 390.
    * The build's own caption convention is three lines away at main.css:243. */
-  background: rgba(242, 238, 215, .97);
+  background: color-mix(in srgb, var(--sub) 97%, transparent);
   font-size: 11px;
   letter-spacing: .02em;
   color: var(--muted);
@@ -698,11 +698,10 @@
  * travel above the dock band. Right outcome, wrong stated mechanism; a later reader
  * trusting the original sentence would have looked for a scrollport that isn't there.
  */
-@media (max-width: 900px) {
-  .about-information-panel {
-    padding-bottom: 76px;
-  }
-}
+/* The 76px `.about-information-panel` padding-bottom that used to live here stacked
+ * with the ABOUT scene's own `calc(124px + safe-area)` clearance — two reservations
+ * for the same inquiry bar left ~148px of blank paper at the page tail (Hallmark m3,
+ * 2026-08-15). The scene-level reservation is the one that survives. */
 
 /* ------------------------------------- `--point` as a text colour, sitewide (J1)
  * The earlier contrast pass wrote "everything else measured 5.07–17.02 and is
@@ -711,14 +710,14 @@
  * text use. Its PROCESS entry is `.process-node:not(.is-current)`, the passing state.
  * The tool was right; the generalisation drawn from it was not.
  *
- * Measured on the rendered page: #798645 is 3.96:1 on the paper ground and 3.39:1 on
+ * Measured on the rendered page: #141414 is 3.96:1 on the paper ground and 3.39:1 on
  * `--sub`, against 4.5:1 for 11–16px text. It fails in 24 places across all six
  * chapters, including `.process-node.is-current strong` — a 14px/500 control label —
  * and every INPUT / RESULT / SCOPE and RESPONSIBILITY / HANDOVER / CONTINUITY term.
  *
  * This is NOT a brand-colour change and the lock holds: `--point` keeps every rule,
  * mark, underline, marker and decorative fill it already paints. Only its use as
- * readable text moves one step down the same hue, to the `--point-deep` #566030 that
+ * readable text moves one step down the same hue, to the `--point-deep` #000000 that
  * was measured at 6.75:1 and accepted for exactly this reason earlier in the project.
  */
 /* Five selectors were removed from this list after a later audit measured them BEFORE
@@ -1090,10 +1089,13 @@
 
 /* --- SHOP: 01 / 02 / 03 sat too far apart to reach. Screenshot 3-4, item 5.
  * `.state-switch button` carries `min-width: 112px` from the desktop rule, so three
- * options needed 336px of a 324px row and the third had to be scrolled to. They fit now.
+ * options needed 336px of a 324px row and the third had to be scrolled to.
+ * The rail is `display: flex` at main.css:576, so the grid-auto declarations alone
+ * were inert and "03 LANDING" still sliced at the edge — the rule has to switch the
+ * display mode itself for three equal columns to engage.
  */
 @media (max-width: 900px) {
-  .chapter--shop .shop-product-rail { grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .chapter--shop .shop-product-rail { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
   .chapter--shop .shop-product-rail button {
     min-width: 0;
     grid-template-columns: 22px minmax(0, 1fr);
@@ -1187,13 +1189,15 @@
   .chapter--process .process-step strong { font-size: 14px; }
 
   /* The active step is the one whose description is showing, so it has to be readable as
-   * such without the curve marker that used to carry that job. */
+   * such without the curve marker that used to carry that job. Ink plate, matching the
+   * card band — the cream highlight predated the B/W conversion. */
   .chapter--process .process-step.is-current {
-    background: rgba(242, 238, 215, .6);
-    color: var(--ink);
+    background: var(--ink);
+    color: var(--main);
   }
 
-  .chapter--process .process-step.is-current strong { color: var(--point-deep); }
+  .chapter--process .process-step.is-current span,
+  .chapter--process .process-step.is-current strong { color: var(--main); }
 
   /* Description last, under the list. */
   .chapter--process .process-detail {
@@ -1443,6 +1447,19 @@
   html[data-flow="vertical"] .vflow-cta a:active { transform: scale(.98); background: var(--sub); }
   html[data-flow="vertical"] .vflow-cta a:focus-visible { outline: 2px solid var(--point); outline-offset: 2px; }
 
+  /* Screen one closed with four 문의 buttons: this in-flow pair plus the fixed bar
+   * carrying the identical labels ~51px below it (Hallmark M3, 2026-08-15). While the
+   * in-flow pair is on screen it owns the job; the bar returns as it scrolls away.
+   * app.js observes [data-vflow-cta] and toggles the class. */
+  html[data-flow="vertical"] .fixed-inquiry {
+    transition: opacity 240ms ease, transform 240ms ease;
+  }
+  html[data-flow="vertical"].vflow-cta-inline .fixed-inquiry {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px);
+  }
+
   /* Landscape phones: a pinned scrub has no room — the settled 55.77vw plate alone
    * can exceed the viewport. The hero renders as the settled static state (concept
    * B), full frame at its own ratio, copy and CTA in normal flow. Same shape the
@@ -1483,6 +1500,158 @@
     html[data-flow="vertical"] .chapter--intro .intro-layout {
       padding-bottom: calc(76px + env(safe-area-inset-bottom));
     }
+  }
+}
+
+/* ================================================================================
+ * GAZU-PRIMARY RESTYLE — owner decisions 2026-08-14 (design/user_decisions_20260814.md)
+ * B/W ink-on-paper system (tokens converted at the root), display type as
+ * environment, ink-band category cards, full-wide scrub-driven hero footage.
+ * Vertical (≤900px) only for structure; the palette applies globally via tokens.
+ * ================================================================================ */
+.vflow-display, .vflow-cards { display: none; }
+
+@media (max-width: 900px) {
+  /* --- hero v3: full-wide footage, type as environment, playback scrubbed.
+   * v3.1: GAZU's screen one shows everything — masthead, footage, hook copy, CTAs.
+   * The scrub therefore drives ONLY the playhead; the reveal choreography that
+   * emptied the first screen's lower half (dead paper) is retired.
+   * 156svh, not 170: the sticky frame's available travel is ~157svh at 390×844, so a
+   * longer runway let the last ~13% of the playhead scrub while the frame slid up. --- */
+  html[data-flow="vertical"] .chapter--intro { height: 156svh; }
+
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cta,
+  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cards {
+    opacity: 1;
+    transform: none;
+  }
+
+  html[data-flow="vertical"] .vflow-display {
+    order: -2;
+    display: flex;
+    flex-direction: column;
+    padding: 10px var(--safe-left) 0;
+    font-family: var(--font-editorial);
+    font-weight: 400;
+    font-size: clamp(64px, 23vw, 150px);
+    line-height: .88;
+    letter-spacing: -.02em;
+    color: var(--ink);
+    z-index: 2;
+    /* The masthead overlaps the footage edge — type frames the image, GAZU-style. */
+    margin-bottom: calc(clamp(64px, 23vw, 150px) * -0.16);
+    pointer-events: none;
+  }
+
+  html[data-flow="vertical"] .chapter--intro .hero-composition {
+    order: -1;
+    /* Full-wide, full-frame from the first pixel — the drama is the scrubbed
+     * playback, not a size morph. Fixed height: zero reflow during the scrub. */
+    height: 55.77vw;
+    z-index: 1;
+  }
+
+  html[data-flow="vertical"] .chapter--intro .chapter__copy h1,
+  html[data-flow="vertical"] .chapter--intro .chapter__copy h2 {
+    font-size: clamp(30px, 8.6vw, 44px);
+    line-height: 1.12;
+    letter-spacing: -.01em;
+  }
+
+  /* --- ink-band category cards (the owner's "탭") --- */
+  html[data-flow="vertical"] .vflow-cards {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(68vw, 300px);
+    gap: 1px;
+    margin-top: 26px;
+    padding: 18px var(--safe-left) 20px;
+    background: var(--ink);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  html[data-flow="vertical"] .vflow-cards::-webkit-scrollbar { display: none; }
+
+  html[data-flow="vertical"] .vflow-cards a {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto auto;
+    column-gap: 12px;
+    row-gap: 6px;
+    padding: 14px 16px 16px 0;
+    scroll-snap-align: start;
+    text-decoration: none;
+    color: var(--main);
+    border-left: 1px solid rgba(246, 245, 242, .28);
+    padding-left: 16px;
+    transition: transform 200ms cubic-bezier(.22, 1, .36, 1);
+  }
+  html[data-flow="vertical"] .vflow-cards a:active { transform: scale(.98); }
+  html[data-flow="vertical"] .vflow-cards a:focus-visible { outline: 2px solid var(--main); outline-offset: 2px; }
+
+  html[data-flow="vertical"] .vflow-cards span {
+    grid-row: 1 / 4;
+    font-family: var(--font-editorial);
+    font-size: 13px;
+    color: rgba(246, 245, 242, .6);
+  }
+  html[data-flow="vertical"] .vflow-cards strong {
+    font-family: var(--font-editorial);
+    font-weight: 400;
+    font-size: 24px;
+    letter-spacing: .02em;
+  }
+  html[data-flow="vertical"] .vflow-cards em {
+    font-style: normal;
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(246, 245, 242, .72);
+    word-break: keep-all;
+  }
+  html[data-flow="vertical"] .vflow-cards b {
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: .08em;
+  }
+
+  /* --- display-scale section type + staggered entrance (design-motion-principles:
+   * one beat, three steps, 60ms apart, existing easing; reduced-motion flattened by
+   * the global kill switch in main.css) --- */
+  html[data-flow="vertical"] .chapter:not(.chapter--intro) h2 {
+    font-size: clamp(32px, 8.8vw, 46px);
+    line-height: 1.1;
+    letter-spacing: -.01em;
+  }
+
+  html[data-flow="vertical"] .chapter:not(.chapter--intro) .eyebrow {
+    font-size: 10px;
+    letter-spacing: .22em;
+  }
+
+  html[data-flow="vertical"] .chapter:not(.chapter--intro) .scene-inner > * {
+    transition-duration: 420ms;
+  }
+  html[data-flow="vertical"] .chapter:not(.chapter--intro):not(.is-active) .scene-inner > * {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  html[data-flow="vertical"] .chapter:not(.chapter--intro).is-active .scene-inner > *:nth-child(2) { transition-delay: 60ms; }
+  html[data-flow="vertical"] .chapter:not(.chapter--intro).is-active .scene-inner > *:nth-child(3) { transition-delay: 120ms; }
+
+  /* The fixed 55.77vw hero height above outranks the earlier landscape exception by
+   * order — re-assert the landscape shape (height-capped static frame, no runway). */
+  @media (orientation: landscape) {
+    html[data-flow="vertical"] .chapter--intro { height: auto; }
+    html[data-flow="vertical"] .chapter--intro .hero-composition {
+      height: auto;
+      aspect-ratio: 832 / 464;
+      width: min(100%, calc((100svh - var(--header-h) - 110px) * 1.7931));
+      margin-inline: auto;
+    }
+    html[data-flow="vertical"] .vflow-display { font-size: clamp(48px, 11vw, 84px); }
   }
 }
 

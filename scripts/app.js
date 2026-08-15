@@ -94,11 +94,24 @@ const mediaConfig = { introHeroVideo:{ src:'./assets/videos/intro/n2jtrini-main.
 // nearly square. develop.css owns the crop.
 if (introVideo) { introVideo.src = mediaConfig.introHeroVideo.src; introVideo.style.objectFit = mediaConfig.introHeroVideo.objectFit; }
 
+const isHeroScrubMode = () => isVerticalFlow()
+  && matchMedia('(orientation: portrait)').matches
+  && !reducedMotion.matches;
+
 function syncIntroVideo() {
   if (!introVideo) return;
   introVideo.muted = true;
   introVideo.defaultMuted = true;
   introVideo.playsInline = true;
+  if (isHeroScrubMode()) {
+    // Owner decision 2026-08-14: playback is scrubbed by scroll/touch, not autoplayed.
+    // The dataset flag tells the render audit this pause is ownership, not a defect.
+    introVideo.dataset.scrubOwned = '1';
+    introVideo.pause();
+    introVideo.classList.add('is-ready');
+    return;
+  }
+  delete introVideo.dataset.scrubOwned;
   const active = chapterIds[state.active] === 'intro' && !reducedMotion.matches && !document.hidden;
   if (active) {
     introVideo.play().then(() => introVideo.classList.add('is-ready')).catch(() => introVideo.classList.remove('is-ready'));
@@ -1262,14 +1275,104 @@ function updateVerticalHero() {
   const intro = chapters[0];
   const rect = intro.getBoundingClientRect();
   const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 58;
-  const runway = rect.height - (innerHeight - headerH);
+  // The playhead must finish while the frame is still pinned. When the sticky layout
+  // is taller than the viewport's content area, the pin releases before the scroll
+  // runway is spent — so the scrub maps onto whichever distance ends first: the
+  // scroll runway or the sticky travel (chapter height minus layout height).
+  const layout = intro.querySelector('.intro-layout');
+  const scrollRunway = rect.height - (innerHeight - headerH);
+  const stickyTravel = layout ? rect.height - layout.offsetHeight : scrollRunway;
+  const runway = Math.min(scrollRunway, stickyTravel);
   if (runway <= 1) {
     // Landscape / reduced-motion render the settled state; keep the variable there.
     intro.style.setProperty('--hero-p', '1');
     return;
   }
   const scrolled = Math.min(Math.max(headerH - rect.top, 0), runway);
-  intro.style.setProperty('--hero-p', (scrolled / runway).toFixed(4));
+  const p = scrolled / runway;
+  intro.style.setProperty('--hero-p', p.toFixed(4));
+  scrubHeroVideo(p);
+}
+
+// Owner decision 2026-08-14: the footage answers the visitor's hand. Scroll owns the
+// base playhead; a horizontal drag on the plate nudges it. Seeks are throttled to the
+// previous seek's completion so slow devices skip frames instead of queueing them.
+const heroScrub = { touchOffset: 0, seeking: false, pendingTime: null, dragStart: null };
+
+function scrubHeroVideo(p) {
+  if (!introVideo || !isHeroScrubMode()) return;
+  const duration = introVideo.duration;
+  if (!Number.isFinite(duration) || duration <= 0) return;
+  if (!introVideo.paused) introVideo.pause();
+  const time = Math.min(Math.max(p * duration + heroScrub.touchOffset, 0), duration - 0.05);
+  if (heroScrub.seeking) {
+    heroScrub.pendingTime = time;
+    return;
+  }
+  heroScrub.seeking = true;
+  introVideo.currentTime = time;
+}
+
+function setupHeroScrub() {
+  if (!introVideo) return;
+  introVideo.addEventListener('seeked', () => {
+    heroScrub.seeking = false;
+    if (heroScrub.pendingTime !== null) {
+      const next = heroScrub.pendingTime;
+      heroScrub.pendingTime = null;
+      heroScrub.seeking = true;
+      introVideo.currentTime = next;
+    }
+  });
+  introVideo.addEventListener('loadedmetadata', () => { if (isHeroScrubMode()) updateVerticalHero(); });
+
+  const plate = document.querySelector('.chapter--intro .hero-composition');
+  if (!plate) return;
+  plate.addEventListener('pointerdown', (event) => {
+    if (!isHeroScrubMode()) return;
+    heroScrub.dragStart = { x: event.clientX, offset: heroScrub.touchOffset };
+  });
+  plate.addEventListener('pointermove', (event) => {
+    if (!isHeroScrubMode() || !heroScrub.dragStart) return;
+    const dx = event.clientX - heroScrub.dragStart.x;
+    const duration = introVideo.duration || 12;
+    // Full plate width = about a third of the clip, so a thumb-length drag reads
+    // as a deliberate nudge rather than a jump cut.
+    heroScrub.touchOffset = heroScrub.dragStart.offset + (dx / Math.max(1, plate.clientWidth)) * duration * 0.35;
+    heroScrub.touchOffset = Math.min(Math.max(heroScrub.touchOffset, -duration), duration);
+    updateVerticalHero();
+  });
+  const endDrag = () => { heroScrub.dragStart = null; };
+  plate.addEventListener('pointerup', endDrag);
+  plate.addEventListener('pointercancel', endDrag);
+}
+
+function setupVflowCards() {
+  document.querySelectorAll('[data-shop-jump]').forEach((card) => {
+    card.addEventListener('click', (event) => {
+      if (!isVerticalFlow()) return;
+      event.preventDefault();
+      const productId = card.dataset.shopJump;
+      const shopIndex = chapterIds.indexOf('shop-custom');
+      if (shopIndex >= 0) verticalScrollToChapter(shopIndex);
+      document.querySelector(`[data-shop-option="${productId}"]`)?.click();
+    });
+  });
+}
+
+function setupInquiryBar() {
+  // While the intro's in-flow 문의 pair is on screen, the fixed bar duplicating the
+  // same two labels stands down (Hallmark M3). The CSS hook lives in develop.css;
+  // in horizontal flow .vflow-cta is display:none, so the class simply never sets.
+  const inlineCta = document.querySelector('[data-vflow-cta]');
+  if (!inlineCta || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((entries) => {
+    document.documentElement.classList.toggle(
+      'vflow-cta-inline',
+      entries[0].isIntersecting
+    );
+  }, { threshold: 0.15 });
+  io.observe(inlineCta);
 }
 
 function activatePassedChapters() {
@@ -1317,6 +1420,8 @@ function setupVerticalFlow() {
     if (!isVerticalFlow()) return;
     entries.forEach((entry) => {
       const video = entry.target;
+      // The hero footage is scrub-owned — the observer must not restart playback.
+      if (video === introVideo && isHeroScrubMode()) return;
       if (entry.isIntersecting && !reducedMotion.matches && video.getAttribute('src')) {
         video.play?.().catch(() => {});
       } else {
@@ -1360,6 +1465,9 @@ setupAboutPointerMotion();
 setupRailIndexes();
 setupIntroParallax();
 setupVerticalFlow();
+setupHeroScrub();
+setupVflowCards();
+setupInquiryBar();
 if (flowMedia.matches) bootVerticalFlow(initialIndex);
 else bootHorizontalFlow(initialIndex);
 flowMedia.addEventListener?.('change', () => {

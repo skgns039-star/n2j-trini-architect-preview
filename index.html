@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="N2J TRINI — 브랜드를 보여주고 구매까지 이어지는 쇼핑몰 경험을 설계합니다.">
   <title>INTRO — N2J TRINI</title>
-  <link rel="stylesheet" href="./styles/main.css?v=n2j-main-20260811-04">
-  <link rel="stylesheet" href="./styles/develop.css?v=n2j-develop-20260812-48">
+  <link rel="stylesheet" href="./styles/main.css?v=n2j-main-20260815-05">
+  <link rel="stylesheet" href="./styles/develop.css?v=n2j-develop-20260815-50">
   <script>document.documentElement.dataset.flow = matchMedia('(max-width: 900px)').matches ? 'vertical' : 'horizontal';</script>
 </head>
 <body>
@@ -74,9 +74,21 @@
     <!-- Vertical-flow consultation CTA (Blueprint 2026-08-11, concept C). Hidden on
          desktop; the vertical stylesheet shows it. Reuses the two existing inquiry
          destinations — no new copy, no new functions. -->
+    <!-- Vertical-flow display masthead (GAZU-primary round, owner-approved 2026-08-14):
+         type as environment, overlapping the footage edge. Decorative — the brand is
+         already announced by the header wordmark. -->
+    <div class="vflow-display" aria-hidden="true"><span>N2J</span><span>TRINI</span></div>
     <nav class="vflow-cta" data-vflow-cta aria-label="상담 문의">
       <a href="https://naver.me/GdT6y0Iu" target="_blank" rel="noopener noreferrer" data-inquiry-channel="naver"><span>네이버</span><b>문의</b></a>
       <a href="http://pf.kakao.com/_xmTYTX/chat" target="_blank" rel="noopener noreferrer" data-inquiry-channel="kakao"><span>카카오</span><b>문의</b></a>
+    </nav>
+    <!-- Category tab cards (owner's "탭을 나눠서" decision): numbered index cards on an
+         ink band, each jumping to the SHOP section with that product selected. Copy is
+         the existing shop headlines — nothing invented. -->
+    <nav class="vflow-cards" data-vflow-cards aria-label="상품 카테고리">
+      <a href="#shop-custom" data-shop-jump="prompt"><span>01</span><strong>PROMPT</strong><em>브랜드와 상품에 맞는 실무용 프롬프트</em><b>SHOP →</b></a>
+      <a href="#shop-custom" data-shop-jump="coding"><span>02</span><strong>CODING</strong><em>필요한 동작을 적용 가능한 코드로</em><b>SHOP →</b></a>
+      <a href="#shop-custom" data-shop-jump="landing"><span>03</span><strong>LANDING</strong><em>한 가지 목표에 집중하는 페이지</em><b>SHOP →</b></a>
     </nav>
   </div>
 </section>
@@ -206,7 +218,6 @@
     <aside class="plans-info" aria-live="polite">
       <div class="plans-info__top"><span data-plan-label>WEBSITE / SELECTED WORK</span><span class="plans-info__index">05 / WORKS</span></div>
       <div class="chapter__copy">
-        <p class="eyebrow">EDITORIAL COMMERCE</p>
         <h2>실제 운영 사례와,<br>예측 가능한 가격 범위.</h2>
         <p class="chapter__description">업종·제작 범위·적용 기능·실제 URL을 확인하고,<br>포함 항목이 분명한 플랜을 비교할 수 있습니다.</p>
       </div>
@@ -299,7 +310,7 @@
   </div>
   <noscript>이 미리보기의 챕터 탐색을 사용하려면 JavaScript를 활성화해 주세요.</noscript>
   <script src="./vendor/motion/motion-13.0.0.js?v=n2j-why-soft-depth-20260806-03"></script>
-  <script type="module" src="./scripts/app.js?v=n2j-app-20260812-06"></script>
+  <script type="module" src="./scripts/app.js?v=n2j-app-20260815-08"></script>
   <script src="./scripts/develop.js?v=n2j-develop-20260810-24"></script>
 </body>
 </html>

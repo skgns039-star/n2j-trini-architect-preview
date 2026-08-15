@@ -6,8 +6,8 @@
 :root {
   --main: #fbfaf7;
   --sub: #f2eed7;
-  --point: #798645;
-  --point-deep: #566030;
+  --point: #141414;
+  --point-deep: #000000;
   --ink: #1b1d16;
   --muted: #626653;
   --line: rgba(27, 29, 22, .14);

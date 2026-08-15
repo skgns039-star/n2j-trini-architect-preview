@@ -6,9 +6,8 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="N2J TRINI — 브랜드를 보여주고 구매까지 이어지는 쇼핑몰 경험을 설계합니다.">
   <title>INTRO — N2J TRINI</title>
-  <link rel="stylesheet" href="./styles/main.css?v=n2j-main-20260815-05">
-  <link rel="stylesheet" href="./styles/develop.css?v=n2j-develop-20260815-50">
-  <script>document.documentElement.dataset.flow = matchMedia('(max-width: 900px)').matches ? 'vertical' : 'horizontal';</script>
+  <link rel="stylesheet" href="./styles/main.css?v=n2j-main-20260815-06">
+  <link rel="stylesheet" href="./styles/develop.css?v=n2j-develop-20260815-53">
 </head>
 <body>
   <a class="skip-link" href="#chapter-stage">본문으로 건너뛰기</a>
@@ -32,7 +31,7 @@
       </div>
       <div class="chapter-status" aria-live="polite">
         <span data-current-label>INTRO</span><span class="chapter-status__line" aria-hidden="true"></span>
-        <span class="chapter-status__number"><b data-current-number>01</b><i>/06</i></span>
+        <span class="chapter-status__number"><b data-current-number>01</b><i>/07</i></span>
       </div>
       <nav class="utility-nav" aria-label="쇼핑 기능">
         <a href="/shop" data-imweb-action="shopping">SHOPPING</a>
@@ -65,38 +64,37 @@
            fine on a build machine and wrong on a public URL: if the 3MB video is slow or
            blocked, the first screen a visitor sees asks its own author for an asset,
            over a poster image that has already loaded. The labels now name the scene. -->
-      <div class="media-stage__top"><span>BRAND COMMERCE</span><span>01 / 06</span></div>
+      <div class="media-stage__top"><span>BRAND COMMERCE</span><span>01 / 07</span></div>
       <video class="intro-hero-video" data-intro-hero-video poster="./assets/videos/intro/n2jtrini-hero-poster.jpg" autoplay muted defaultmuted loop playsinline webkit-playsinline preload="metadata" aria-hidden="true" tabindex="-1" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback"></video>
       <div class="intro-media-mark" aria-hidden="true"><span>BRAND</span><i></i><span>COMMERCE</span></div>
       <div class="media-stage__bottom"><span>DESIGN IN PROGRESS</span><span>N2J TRINI</span></div>
       <span class="intro-media-credit">AI 제작 이미지 영상</span>
     </div>
-    <!-- Vertical-flow consultation CTA (Blueprint 2026-08-11, concept C). Hidden on
-         desktop; the vertical stylesheet shows it. Reuses the two existing inquiry
-         destinations — no new copy, no new functions. -->
-    <!-- Vertical-flow display masthead (GAZU-primary round, owner-approved 2026-08-14):
-         type as environment, overlapping the footage edge. Decorative — the brand is
-         already announced by the header wordmark. -->
-    <div class="vflow-display" aria-hidden="true"><span>N2J</span><span>TRINI</span></div>
-    <nav class="vflow-cta" data-vflow-cta aria-label="상담 문의">
-      <a href="https://naver.me/GdT6y0Iu" target="_blank" rel="noopener noreferrer" data-inquiry-channel="naver"><span>네이버</span><b>문의</b></a>
-      <a href="http://pf.kakao.com/_xmTYTX/chat" target="_blank" rel="noopener noreferrer" data-inquiry-channel="kakao"><span>카카오</span><b>문의</b></a>
-    </nav>
-    <!-- Category tab cards (owner's "탭을 나눠서" decision): numbered index cards on an
-         ink band, each jumping to the SHOP section with that product selected. Copy is
-         the existing shop headlines — nothing invented. -->
-    <nav class="vflow-cards" data-vflow-cards aria-label="상품 카테고리">
-      <a href="#shop-custom" data-shop-jump="prompt"><span>01</span><strong>PROMPT</strong><em>브랜드와 상품에 맞는 실무용 프롬프트</em><b>SHOP →</b></a>
-      <a href="#shop-custom" data-shop-jump="coding"><span>02</span><strong>CODING</strong><em>필요한 동작을 적용 가능한 코드로</em><b>SHOP →</b></a>
-      <a href="#shop-custom" data-shop-jump="landing"><span>03</span><strong>LANDING</strong><em>한 가지 목표에 집중하는 페이지</em><b>SHOP →</b></a>
-    </nav>
   </div>
 </section>
 
-<section class="chapter chapter--why" id="why-n2j" data-chapter="why-n2j" data-number="02" data-label="WHY N2J" aria-hidden="true">
+<section class="chapter chapter--start" id="start-inquiry" data-chapter="start-inquiry" data-number="02" data-label="START" aria-hidden="true">
+  <div class="start-layout scene-inner">
+    <div class="chapter__copy start-copy">
+      <p class="eyebrow">START A PROJECT / 02</p>
+      <!-- Type-as-composition: the intro's own words (eyebrow + media mark), scaled to
+           carry the chapter. No new claims — the CTA links are the two approved
+           channels the fixed inquiry bar already uses. -->
+      <p class="start-display" aria-hidden="true"><span>BRAND</span><span>TO</span><span>COMMERCE</span></p>
+      <h2>범위와 비용을 먼저 확인하고,<br>상담으로 시작하세요.</h2>
+      <p class="chapter__description">포함 범위·기능·오픈 후 대응 기준을<br>제작 전에 확인할 수 있습니다.</p>
+      <nav class="start-cta" aria-label="상담 문의">
+        <a href="https://naver.me/GdT6y0Iu" target="_blank" rel="noopener noreferrer" data-inquiry-channel="naver"><span>네이버</span><b>문의</b></a>
+        <a href="http://pf.kakao.com/_xmTYTX/chat" target="_blank" rel="noopener noreferrer" data-inquiry-channel="kakao"><span>카카오</span><b>문의</b></a>
+      </nav>
+    </div>
+  </div>
+</section>
+
+<section class="chapter chapter--why" id="why-n2j" data-chapter="why-n2j" data-number="03" data-label="WHY N2J" aria-hidden="true">
   <div class="why-layout scene-inner">
     <div class="chapter__copy why-copy">
-      <p class="eyebrow">CLARITY BEFORE BUILD / 02</p>
+      <p class="eyebrow">CLARITY BEFORE BUILD / 03</p>
       <h2>비용·기능·책임을<br>먼저 분명하게.</h2>
       <p class="chapter__description">무엇이 포함되고 실제로 어디까지 가능한지,<br>오픈 후에는 어떻게 대응하는지 제작 전에 확인할 수 있습니다.</p>
     </div>
@@ -121,17 +119,17 @@
   </div>
 </section>
 
-<section class="chapter chapter--shop" id="shop-custom" data-chapter="shop-custom" data-number="03" data-label="SHOP" aria-hidden="true">
+<section class="chapter chapter--shop" id="shop-custom" data-chapter="shop-custom" data-number="04" data-label="SHOP" aria-hidden="true">
   <div class="shop-ambient" data-shop-ambient aria-hidden="true">
     <span class="shop-ambient__grid"></span>
     <span class="shop-ambient__sweep" data-shop-ambient-sweep></span>
     <span class="shop-ambient__trace shop-ambient__trace--primary" data-shop-ambient-trace="primary"></span>
     <span class="shop-ambient__trace shop-ambient__trace--secondary" data-shop-ambient-trace="secondary"></span>
-    <span class="shop-ambient__meta">03 / KINETIC COMMERCE</span>
+    <span class="shop-ambient__meta">04 / KINETIC COMMERCE</span>
   </div>
   <div class="shop-layout scene-inner">
     <div class="chapter__copy shop-copy">
-      <p class="eyebrow">NATIVE SHOP / 03</p>
+      <p class="eyebrow">NATIVE SHOP / 04</p>
       <h2>쇼핑 기능은 안정적으로,<br>브랜드 경험은 다르게.</h2>
       <p class="chapter__description">익숙하고 검증된 쇼핑 기능을 지키면서<br>고객이 기억할 브랜드 경험을 설계합니다.</p>
       <div class="shop-product-rail state-switch" data-horizontal-subscroll role="tablist" aria-label="상품 유형 선택">
@@ -162,11 +160,11 @@
   </div>
 </section>
 
-<section class="chapter chapter--process" id="process" data-chapter="process" data-number="04" data-label="PROCESS" aria-hidden="true">
+<section class="chapter chapter--process" id="process" data-chapter="process" data-number="05" data-label="PROCESS" aria-hidden="true">
   <div class="process-layout scene-inner">
     <div class="process-head">
       <div class="chapter__copy">
-        <p class="eyebrow">VISIBLE PROGRESS / 04</p>
+        <p class="eyebrow">VISIBLE PROGRESS / 05</p>
         <h2>과정이 보이면<br>프로젝트가 빨라집니다.</h2>
       </div>
       <div class="process-summary">
@@ -199,10 +197,10 @@
   </div>
 </section>
 
-<section class="chapter chapter--plans" id="plans-works" data-chapter="plans-works" data-number="05" data-label="PLANS / WORKS" aria-hidden="true">
+<section class="chapter chapter--plans" id="plans-works" data-chapter="plans-works" data-number="06" data-label="PLANS / WORKS" aria-hidden="true">
   <div class="plans-layout scene-inner">
     <aside class="plans-rail-column" aria-label="프로젝트 선택">
-      <p class="eyebrow">SELECTED WORKS / 05</p>
+      <p class="eyebrow">SELECTED WORKS / 06</p>
       <div class="plans-rail project-rail horizontal-rail" data-horizontal-rail data-horizontal-subscroll tabindex="0" aria-label="프로젝트 선택"></div>
     </aside>
     <div class="works-viewer media-stage" data-plan-viewer>
@@ -216,7 +214,7 @@
       <div class="media-stage__bottom"><span>SCROLL TO EXPLORE</span><span>FULL PAGE VIEW</span></div>
     </div>
     <aside class="plans-info" aria-live="polite">
-      <div class="plans-info__top"><span data-plan-label>WEBSITE / SELECTED WORK</span><span class="plans-info__index">05 / WORKS</span></div>
+      <div class="plans-info__top"><span data-plan-label>WEBSITE / SELECTED WORK</span><span class="plans-info__index">06 / WORKS</span></div>
       <div class="chapter__copy">
         <h2>실제 운영 사례와,<br>예측 가능한 가격 범위.</h2>
         <p class="chapter__description">업종·제작 범위·적용 기능·실제 URL을 확인하고,<br>포함 항목이 분명한 플랜을 비교할 수 있습니다.</p>
@@ -231,7 +229,7 @@
   </div>
 </section>
 
-<section class="chapter chapter--about" id="about" data-chapter="about" data-number="06" data-label="ABOUT" aria-hidden="true">
+<section class="chapter chapter--about" id="about" data-chapter="about" data-number="07" data-label="ABOUT" aria-hidden="true">
   <div class="about-shell scene-inner">
     <div class="about-portrait-column">
       <div class="about-portrait-frame media-stage" data-about-viewer aria-label="N2J 인물 소개">
@@ -249,7 +247,7 @@
       </div>
     </div>
     <div class="about-information-panel">
-      <p class="eyebrow">PEOPLE &amp; SYSTEM / 06</p>
+      <p class="eyebrow">PEOPLE &amp; SYSTEM / 07</p>
       <h2>사람의 감각과,<br>시스템의 지속성.</h2>
       <p class="chapter__description">브랜드를 이해하는 사람의 판단과<br>기록·검수·자동화가 이어지는 운영 방식을 함께 만듭니다.</p>
       <div class="about-person-information">
@@ -287,11 +285,12 @@
         <div class="index-panel__head"><span class="sr-only">챕터 메뉴</span><button type="button" data-index-close aria-label="챕터 메뉴 닫기">닫기</button></div>
         <ol class="index-list">
           <li><button type="button" data-chapter-link="intro"><span>01</span> INTRO</button></li>
-          <li><button type="button" data-chapter-link="why-n2j"><span>02</span> WHY N2J</button></li>
-          <li><button type="button" data-chapter-link="shop-custom"><span>03</span> SHOP</button></li>
-          <li><button type="button" data-chapter-link="process"><span>04</span> PROCESS</button></li>
-          <li><button type="button" data-chapter-link="plans-works"><span>05</span> PLANS / WORKS</button></li>
-          <li><button type="button" data-chapter-link="about"><span>06</span> ABOUT</button></li>
+          <li><button type="button" data-chapter-link="start-inquiry"><span>02</span> START</button></li>
+          <li><button type="button" data-chapter-link="why-n2j"><span>03</span> WHY N2J</button></li>
+          <li><button type="button" data-chapter-link="shop-custom"><span>04</span> SHOP</button></li>
+          <li><button type="button" data-chapter-link="process"><span>05</span> PROCESS</button></li>
+          <li><button type="button" data-chapter-link="plans-works"><span>06</span> PLANS / WORKS</button></li>
+          <li><button type="button" data-chapter-link="about"><span>07</span> ABOUT</button></li>
         </ol>
         <nav class="index-utility" aria-label="전체 기능 메뉴">
           <a href="/shop" data-imweb-action="shopping">SHOPPING</a><a href="/shop_cart" data-imweb-action="cart">CART</a>
@@ -310,7 +309,7 @@
   </div>
   <noscript>이 미리보기의 챕터 탐색을 사용하려면 JavaScript를 활성화해 주세요.</noscript>
   <script src="./vendor/motion/motion-13.0.0.js?v=n2j-why-soft-depth-20260806-03"></script>
-  <script type="module" src="./scripts/app.js?v=n2j-app-20260815-08"></script>
-  <script src="./scripts/develop.js?v=n2j-develop-20260810-24"></script>
+  <script type="module" src="./scripts/app.js?v=n2j-app-20260815-10"></script>
+  <script src="./scripts/develop.js?v=n2j-develop-20260815-25"></script>
 </body>
 </html>

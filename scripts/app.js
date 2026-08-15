@@ -3,13 +3,6 @@ const track = document.querySelector('[data-scene-track]');
 const chapters = [...document.querySelectorAll('[data-chapter]')];
 const chapterIds = chapters.map((chapter) => chapter.dataset.chapter);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-// Blueprint 2026-08-11: ≤900px is a vertical document, >900px keeps the horizontal
-// track. The inline head snippet stamps the attribute before first paint; this module
-// keeps it current across the boundary. Every horizontal-only handler checks the LIVE
-// mode, so crossing 900px (tablet rotation) reconfigures without a reload.
-const flowMedia = matchMedia('(max-width: 900px)');
-const isVerticalFlow = () => document.documentElement.dataset.flow === 'vertical';
-document.documentElement.dataset.flow = flowMedia.matches ? 'vertical' : 'horizontal';
 const initialIndex = Math.max(0, chapterIds.indexOf(location.hash.slice(1)));
 
 history.scrollRestoration = 'manual';
@@ -94,24 +87,11 @@ const mediaConfig = { introHeroVideo:{ src:'./assets/videos/intro/n2jtrini-main.
 // nearly square. develop.css owns the crop.
 if (introVideo) { introVideo.src = mediaConfig.introHeroVideo.src; introVideo.style.objectFit = mediaConfig.introHeroVideo.objectFit; }
 
-const isHeroScrubMode = () => isVerticalFlow()
-  && matchMedia('(orientation: portrait)').matches
-  && !reducedMotion.matches;
-
 function syncIntroVideo() {
   if (!introVideo) return;
   introVideo.muted = true;
   introVideo.defaultMuted = true;
   introVideo.playsInline = true;
-  if (isHeroScrubMode()) {
-    // Owner decision 2026-08-14: playback is scrubbed by scroll/touch, not autoplayed.
-    // The dataset flag tells the render audit this pause is ownership, not a defect.
-    introVideo.dataset.scrubOwned = '1';
-    introVideo.pause();
-    introVideo.classList.add('is-ready');
-    return;
-  }
-  delete introVideo.dataset.scrubOwned;
   const active = chapterIds[state.active] === 'intro' && !reducedMotion.matches && !document.hidden;
   if (active) {
     introVideo.play().then(() => introVideo.classList.add('is-ready')).catch(() => introVideo.classList.remove('is-ready'));
@@ -320,12 +300,6 @@ function goToChapter(index, options = {}) {
   const next = clampIndex(index);
   chapterDiagnostics.navigationCount += 1;
   chapterDiagnostics.lastSource = options.source || 'unknown';
-  if (isVerticalFlow()) {
-    // Vertical flow: a chapter is a place in the document, not a machine state.
-    // Hash/history jumps land instantly, like a native anchor; menu taps glide.
-    verticalScrollToChapter(next, { instant: Boolean(options.fromHistory || options.instant) });
-    return;
-  }
   if (next === state.target && Math.abs(stage.scrollLeft - chapterLeft(next)) <= 1) { chapterDiagnostics.duplicateRequestCount += 1; }
   if (state.transitionPromise) {
     const authoritative = ['menu','hash','popstate','history'].includes(options.source);
@@ -357,7 +331,6 @@ function navigateToChapter(targetIndex, options = {}) { return goToChapter(targe
 const moveChapter = (delta, source = 'input') => goToChapter(state.active + delta, { source });
 
 function settleScrolledScene() {
-  if (isVerticalFlow()) return;
   if (state.transitionPromise) return;
   const next = exactSceneIndex();
   const difference = Math.abs(stage.scrollLeft - chapterLeft(next));
@@ -366,7 +339,6 @@ function settleScrolledScene() {
 }
 
 function onStageScroll() {
-  if (isVerticalFlow()) return;
   if (state.scrollFrame) return;
   state.scrollFrame = requestAnimationFrame(() => {
     state.scrollFrame = null;
@@ -453,7 +425,6 @@ function setupChapterNavigation() {
   });
 
   document.addEventListener('wheel', (event) => {
-    if (isVerticalFlow()) return;
     if (ui.indexPanel.classList.contains('is-open')) return;
     const magnitude = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
     if (Math.abs(magnitude) < 12) return;
@@ -494,7 +465,6 @@ function setupChapterNavigation() {
   document.addEventListener('pointerup', (event) => {
     const start = state.pointerStart;
     state.pointerStart = null;
-    if (isVerticalFlow()) return;
     if (!start || ui.indexPanel.classList.contains('is-open')) return;
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
@@ -529,7 +499,6 @@ function setupChapterNavigation() {
       closeIndex();
       return;
     }
-    if (isVerticalFlow()) return;
     if (isInteractive(event.target) || subscrollFor(event.target)) return;
     if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(event.key)) {
       event.preventDefault();
@@ -562,7 +531,7 @@ function setupChapterNavigation() {
     if (index >= 0 && index !== state.active) goToChapter(index, { fromHistory: true });
   });
 
-  const reposition = () => { if (!isVerticalFlow()) settleAt(state.active, 'auto'); };
+  const reposition = () => settleAt(state.active, 'auto');
   addEventListener('resize', reposition);
   new ResizeObserver(reposition).observe(stage);
 }
@@ -819,12 +788,23 @@ const planStates = [
   { label:'WORKS / PLACEHOLDER', title:'실제 운영 사례 자산 대기', status:'검증 가능한 실제 URL과 이미지가 없어 placeholder로 명확히 표시합니다.', list:['허위 URL 없음','허위 성과 없음','실제 자산 추가 예정'] },
 ];
 
+// Long single-word brand names (VANTAMODUS, DUCKFEET) have no natural break the
+// line-breaker can use in a narrow rail cell, and `overflow-wrap: anywhere` snapped
+// them at the last fitting glyph ("VANTAMODU / S" — 2026-08-15 Hallmark Major).
+// A midpoint <wbr> gives each one exactly one sanctioned break (VANTA·MODUS,
+// DUCK·FEET) that only engages when the cell is actually too narrow.
+const softBreakLabel = (title) => title.split(' ').map((word) => (
+  word.length >= 8
+    ? `${word.slice(0, Math.ceil(word.length / 2))}<wbr>${word.slice(Math.ceil(word.length / 2))}`
+    : word
+)).join(' ');
+
 function setupPlansViewer() {
   const rail = document.querySelector('.plans-rail');
   const root = document.querySelector('.plans-layout');
   if (rail && legacyContent.worksProjects.length) {
     rail.replaceChildren(...legacyContent.worksProjects.map((project, index) => {
-      const button = document.createElement('button'); button.type='button'; button.className=`plan-option${index === 0 ? ' is-current' : ''}`; button.dataset.railItem=''; button.dataset.planIndex=String(index); button.dataset.interactive=''; button.innerHTML=`<span>${String(index + 1).padStart(2,'0')}</span><strong>${project.title}</strong><small>${project.category}</small>`; return button;
+      const button = document.createElement('button'); button.type='button'; button.className=`plan-option${index === 0 ? ' is-current' : ''}`; button.dataset.railItem=''; button.dataset.planIndex=String(index); button.dataset.interactive=''; button.innerHTML=`<span>${String(index + 1).padStart(2,'0')}</span><strong>${softBreakLabel(project.title)}</strong><small>${project.category}</small>`; return button;
     }));
   }
   const buttons = [...document.querySelectorAll('[data-plan-index]')];
@@ -1228,231 +1208,6 @@ function audit() {
   };
 }
 
-// ------------------------------------------------------------------ vertical flow
-// Blueprint 2026-08-11 concept C. ≤900px is one vertical document: every chapter is a
-// section in flow, the counter is a scroll-position index, and the hero video enters
-// maximized then settles to its full 832:464 frame with the consultation CTA beneath.
-// All listeners are registered once and check the LIVE mode, so crossing the 900px
-// boundary reconfigures both ways without a reload and without double-binding.
-const vertical = { videoObserver:null, scrollFrame:null, lastIndex:-1 };
-
-function applyVerticalCounter(index) {
-  const next = clampIndex(index);
-  if (next === vertical.lastIndex) return;
-  vertical.lastIndex = next;
-  const changed = state.active !== next;
-  state.active = next;
-  state.target = next;
-  const chapter = chapters[next];
-  if (changed) {
-    restartAnimation(ui.status, 'is-changing');
-    restartAnimation(ui.currentNumber, 'is-rolling');
-  }
-  ui.currentLabel.textContent = chapter.dataset.label;
-  ui.currentNumber.textContent = chapter.dataset.number;
-  ui.mobileNumber.textContent = chapter.dataset.number;
-  ui.progress.style.transform = `scaleX(${(next + 1) / chapters.length})`;
-  document.title = `${chapter.dataset.label} — N2J TRINI`;
-  document.querySelectorAll('[data-chapter-link]').forEach((link) => {
-    const current = link.dataset.chapterLink === chapter.dataset.chapter;
-    link.classList.toggle('is-current', current);
-    current ? link.setAttribute('aria-current', 'page') : link.removeAttribute('aria-current');
-  });
-  history.replaceState({ chapter: chapter.dataset.chapter }, '', `#${chapter.dataset.chapter}`);
-  syncIntroVideo();
-}
-
-function verticalScrollToChapter(index, options = {}) {
-  const next = clampIndex(index);
-  closeIndex();
-  chapters[next].scrollIntoView({
-    behavior: reducedMotion.matches || options.instant ? 'auto' : 'smooth',
-    block: 'start',
-  });
-}
-
-function updateVerticalHero() {
-  const intro = chapters[0];
-  const rect = intro.getBoundingClientRect();
-  const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 58;
-  // The playhead must finish while the frame is still pinned. When the sticky layout
-  // is taller than the viewport's content area, the pin releases before the scroll
-  // runway is spent — so the scrub maps onto whichever distance ends first: the
-  // scroll runway or the sticky travel (chapter height minus layout height).
-  const layout = intro.querySelector('.intro-layout');
-  const scrollRunway = rect.height - (innerHeight - headerH);
-  const stickyTravel = layout ? rect.height - layout.offsetHeight : scrollRunway;
-  const runway = Math.min(scrollRunway, stickyTravel);
-  if (runway <= 1) {
-    // Landscape / reduced-motion render the settled state; keep the variable there.
-    intro.style.setProperty('--hero-p', '1');
-    return;
-  }
-  const scrolled = Math.min(Math.max(headerH - rect.top, 0), runway);
-  const p = scrolled / runway;
-  intro.style.setProperty('--hero-p', p.toFixed(4));
-  scrubHeroVideo(p);
-}
-
-// Owner decision 2026-08-14: the footage answers the visitor's hand. Scroll owns the
-// base playhead; a horizontal drag on the plate nudges it. Seeks are throttled to the
-// previous seek's completion so slow devices skip frames instead of queueing them.
-const heroScrub = { touchOffset: 0, seeking: false, pendingTime: null, dragStart: null };
-
-function scrubHeroVideo(p) {
-  if (!introVideo || !isHeroScrubMode()) return;
-  const duration = introVideo.duration;
-  if (!Number.isFinite(duration) || duration <= 0) return;
-  if (!introVideo.paused) introVideo.pause();
-  const time = Math.min(Math.max(p * duration + heroScrub.touchOffset, 0), duration - 0.05);
-  if (heroScrub.seeking) {
-    heroScrub.pendingTime = time;
-    return;
-  }
-  heroScrub.seeking = true;
-  introVideo.currentTime = time;
-}
-
-function setupHeroScrub() {
-  if (!introVideo) return;
-  introVideo.addEventListener('seeked', () => {
-    heroScrub.seeking = false;
-    if (heroScrub.pendingTime !== null) {
-      const next = heroScrub.pendingTime;
-      heroScrub.pendingTime = null;
-      heroScrub.seeking = true;
-      introVideo.currentTime = next;
-    }
-  });
-  introVideo.addEventListener('loadedmetadata', () => { if (isHeroScrubMode()) updateVerticalHero(); });
-
-  const plate = document.querySelector('.chapter--intro .hero-composition');
-  if (!plate) return;
-  plate.addEventListener('pointerdown', (event) => {
-    if (!isHeroScrubMode()) return;
-    heroScrub.dragStart = { x: event.clientX, offset: heroScrub.touchOffset };
-  });
-  plate.addEventListener('pointermove', (event) => {
-    if (!isHeroScrubMode() || !heroScrub.dragStart) return;
-    const dx = event.clientX - heroScrub.dragStart.x;
-    const duration = introVideo.duration || 12;
-    // Full plate width = about a third of the clip, so a thumb-length drag reads
-    // as a deliberate nudge rather than a jump cut.
-    heroScrub.touchOffset = heroScrub.dragStart.offset + (dx / Math.max(1, plate.clientWidth)) * duration * 0.35;
-    heroScrub.touchOffset = Math.min(Math.max(heroScrub.touchOffset, -duration), duration);
-    updateVerticalHero();
-  });
-  const endDrag = () => { heroScrub.dragStart = null; };
-  plate.addEventListener('pointerup', endDrag);
-  plate.addEventListener('pointercancel', endDrag);
-}
-
-function setupVflowCards() {
-  document.querySelectorAll('[data-shop-jump]').forEach((card) => {
-    card.addEventListener('click', (event) => {
-      if (!isVerticalFlow()) return;
-      event.preventDefault();
-      const productId = card.dataset.shopJump;
-      const shopIndex = chapterIds.indexOf('shop-custom');
-      if (shopIndex >= 0) verticalScrollToChapter(shopIndex);
-      document.querySelector(`[data-shop-option="${productId}"]`)?.click();
-    });
-  });
-}
-
-function setupInquiryBar() {
-  // While the intro's in-flow 문의 pair is on screen, the fixed bar duplicating the
-  // same two labels stands down (Hallmark M3). The CSS hook lives in develop.css;
-  // in horizontal flow .vflow-cta is display:none, so the class simply never sets.
-  const inlineCta = document.querySelector('[data-vflow-cta]');
-  if (!inlineCta || !('IntersectionObserver' in window)) return;
-  const io = new IntersectionObserver((entries) => {
-    document.documentElement.classList.toggle(
-      'vflow-cta-inline',
-      entries[0].isIntersecting
-    );
-  }, { threshold: 0.15 });
-  io.observe(inlineCta);
-}
-
-function activatePassedChapters() {
-  // An IntersectionObserver misses sections a programmatic jump flies past, and a
-  // section that was passed is a section that was seen. Anything whose top has
-  // entered the lower viewport becomes active, once, in document order.
-  const limit = innerHeight * 0.82;
-  let synced = false;
-  chapters.forEach((chapter) => {
-    if (chapter.classList.contains('is-active')) return;
-    if (chapter.getBoundingClientRect().top <= limit) {
-      chapter.classList.add('is-active');
-      synced = true;
-    }
-  });
-  if (synced) {
-    window.__N2J_SYNC_WHY_VIDEO__?.();
-    window.__N2J_SYNC_SHOP_VIDEO__?.();
-    window.__N2J_SYNC_SHOP_AMBIENT__?.();
-  }
-}
-
-function onVerticalScroll() {
-  if (!isVerticalFlow() || vertical.scrollFrame) return;
-  vertical.scrollFrame = requestAnimationFrame(() => {
-    vertical.scrollFrame = null;
-    if (!isVerticalFlow()) return;
-    updateVerticalHero();
-    activatePassedChapters();
-    const probe = innerHeight * 0.45;
-    let index = 0;
-    chapters.forEach((chapter, chapterIndex) => {
-      if (chapter.getBoundingClientRect().top <= probe) index = chapterIndex;
-    });
-    applyVerticalCounter(index);
-  });
-}
-
-function setupVerticalFlow() {
-  addEventListener('scroll', onVerticalScroll, { passive:true });
-  addEventListener('resize', () => { if (isVerticalFlow()) updateVerticalHero(); });
-
-  // Muted loops off screen are battery burn: pause what is not visible.
-  vertical.videoObserver = new IntersectionObserver((entries) => {
-    if (!isVerticalFlow()) return;
-    entries.forEach((entry) => {
-      const video = entry.target;
-      // The hero footage is scrub-owned — the observer must not restart playback.
-      if (video === introVideo && isHeroScrubMode()) return;
-      if (entry.isIntersecting && !reducedMotion.matches && video.getAttribute('src')) {
-        video.play?.().catch(() => {});
-      } else {
-        video.pause?.();
-      }
-    });
-  }, { threshold: 0.05 });
-  document.querySelectorAll('video').forEach((video) => vertical.videoObserver.observe(video));
-}
-
-function bootVerticalFlow(index) {
-  document.documentElement.dataset.flow = 'vertical';
-  vertical.lastIndex = -1;
-  chapters.forEach((chapter, chapterIndex) => {
-    chapter.setAttribute('aria-hidden', 'false');
-    chapter.classList.remove('is-before');
-    if (chapterIndex === 0) chapter.classList.add('is-active');
-  });
-  applyVerticalCounter(index);
-  updateVerticalHero();
-  activatePassedChapters();
-  if (index > 0) requestAnimationFrame(() => verticalScrollToChapter(index, { instant:true }));
-}
-
-function bootHorizontalFlow(index) {
-  document.documentElement.dataset.flow = 'horizontal';
-  chapters[0].style.removeProperty('--hero-p');
-  applyActive(index, { history:'replace' });
-  requestAnimationFrame(() => settleAt(index, 'auto'));
-}
-
 setupChapterNavigation();
 setupWhyViewer();
 setupShopViewer();
@@ -1464,16 +1219,8 @@ setupAboutPeople();
 setupAboutPointerMotion();
 setupRailIndexes();
 setupIntroParallax();
-setupVerticalFlow();
-setupHeroScrub();
-setupVflowCards();
-setupInquiryBar();
-if (flowMedia.matches) bootVerticalFlow(initialIndex);
-else bootHorizontalFlow(initialIndex);
-flowMedia.addEventListener?.('change', () => {
-  if (flowMedia.matches) bootVerticalFlow(state.active);
-  else bootHorizontalFlow(state.active);
-});
+applyActive(initialIndex, { history:'replace' });
+requestAnimationFrame(() => settleAt(initialIndex, 'auto'));
 setupIntro();
 
 window.__N2J_PREVIEW__ = {

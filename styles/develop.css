@@ -169,13 +169,13 @@
  * text. A later audit found 24 failing text uses. See the J1 section at the end of this
  * file; the tool's targets have been widened so the same gap cannot reopen.
  *
- * The brand accent is NOT changed: `--point` #141414 keeps all 20+ decorative uses.
+ * The brand accent is NOT changed: `--point` #798645 keeps all 20+ decorative uses.
  * This is one darker step on the same hue (72.0° → 72.5°, L 39.8% → 28.2%) — a tint
  * ramp, not a new colour. Named for its depth, not a role, because it paints both
  * text and a button surface.
  */
 :root {
-  --point-deep: #000000;
+  --point-deep: #566030;
 }
 
 .evidence-tabs button.is-current,
@@ -248,7 +248,7 @@
    * from another project, so the declaration was invalid, the plate computed to
    * rgba(0,0,0,0), and an 11px label sat on moving video at 1.46 contrast at 390.
    * The build's own caption convention is three lines away at main.css:243. */
-  background: color-mix(in srgb, var(--sub) 97%, transparent);
+  background: rgba(242, 238, 215, .97);
   font-size: 11px;
   letter-spacing: .02em;
   color: var(--muted);
@@ -698,10 +698,11 @@
  * travel above the dock band. Right outcome, wrong stated mechanism; a later reader
  * trusting the original sentence would have looked for a scrollport that isn't there.
  */
-/* The 76px `.about-information-panel` padding-bottom that used to live here stacked
- * with the ABOUT scene's own `calc(124px + safe-area)` clearance — two reservations
- * for the same inquiry bar left ~148px of blank paper at the page tail (Hallmark m3,
- * 2026-08-15). The scene-level reservation is the one that survives. */
+@media (max-width: 900px) {
+  .about-information-panel {
+    padding-bottom: 76px;
+  }
+}
 
 /* ------------------------------------- `--point` as a text colour, sitewide (J1)
  * The earlier contrast pass wrote "everything else measured 5.07–17.02 and is
@@ -710,14 +711,14 @@
  * text use. Its PROCESS entry is `.process-node:not(.is-current)`, the passing state.
  * The tool was right; the generalisation drawn from it was not.
  *
- * Measured on the rendered page: #141414 is 3.96:1 on the paper ground and 3.39:1 on
+ * Measured on the rendered page: #798645 is 3.96:1 on the paper ground and 3.39:1 on
  * `--sub`, against 4.5:1 for 11–16px text. It fails in 24 places across all six
  * chapters, including `.process-node.is-current strong` — a 14px/500 control label —
  * and every INPUT / RESULT / SCOPE and RESPONSIBILITY / HANDOVER / CONTINUITY term.
  *
  * This is NOT a brand-colour change and the lock holds: `--point` keeps every rule,
  * mark, underline, marker and decorative fill it already paints. Only its use as
- * readable text moves one step down the same hue, to the `--point-deep` #000000 that
+ * readable text moves one step down the same hue, to the `--point-deep` #566030 that
  * was measured at 6.75:1 and accepted for exactly this reason earlier in the project.
  */
 /* Five selectors were removed from this list after a later audit measured them BEFORE
@@ -1089,13 +1090,10 @@
 
 /* --- SHOP: 01 / 02 / 03 sat too far apart to reach. Screenshot 3-4, item 5.
  * `.state-switch button` carries `min-width: 112px` from the desktop rule, so three
- * options needed 336px of a 324px row and the third had to be scrolled to.
- * The rail is `display: flex` at main.css:576, so the grid-auto declarations alone
- * were inert and "03 LANDING" still sliced at the edge — the rule has to switch the
- * display mode itself for three equal columns to engage.
+ * options needed 336px of a 324px row and the third had to be scrolled to. They fit now.
  */
 @media (max-width: 900px) {
-  .chapter--shop .shop-product-rail { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .chapter--shop .shop-product-rail { grid-auto-flow: column; grid-auto-columns: 1fr; }
   .chapter--shop .shop-product-rail button {
     min-width: 0;
     grid-template-columns: 22px minmax(0, 1fr);
@@ -1112,6 +1110,23 @@
   .plan-option { flex-basis: 44%; min-width: 44%; }
   .plan-option { grid-template-columns: 22px minmax(0, 1fr); }
   .plan-option small { display: none; }
+
+  /* At 320 a 44% cell leaves ~85px for a ~100px bold uppercase label and the strong
+   * painted past its button onto the next tab's numeral (Hallmark 2026-08-15 M2).
+   * Wrap, don't ellipsize: an ellipsis amputates the brand names the rail exists to
+   * show (and reads as truncation to the render audit); a second line keeps every
+   * name whole and the scene scrollport absorbs the taller rail. */
+  .plan-option strong {
+    min-width: 0;
+    white-space: normal;
+    /* break-word, NOT anywhere: `anywhere` offers a break after every glyph, and
+     * the line-breaker takes the LAST one that fits — orphaning a single letter
+     * (VANTAMODU / S). With break-word the only mid-word breaks are the midpoint
+     * <wbr>s app.js plants in ≥8-char words, so an unavoidable wrap lands at
+     * VANTA / MODUS; break-word still backstops any future unbreakable token. */
+    overflow-wrap: break-word;
+    line-height: 1.25;
+  }
 }
 
 @media (min-width: 561px) and (max-width: 900px) {
@@ -1189,15 +1204,13 @@
   .chapter--process .process-step strong { font-size: 14px; }
 
   /* The active step is the one whose description is showing, so it has to be readable as
-   * such without the curve marker that used to carry that job. Ink plate, matching the
-   * card band — the cream highlight predated the B/W conversion. */
+   * such without the curve marker that used to carry that job. */
   .chapter--process .process-step.is-current {
-    background: var(--ink);
-    color: var(--main);
+    background: rgba(242, 238, 215, .6);
+    color: var(--ink);
   }
 
-  .chapter--process .process-step.is-current span,
-  .chapter--process .process-step.is-current strong { color: var(--main); }
+  .chapter--process .process-step.is-current strong { color: var(--point-deep); }
 
   /* Description last, under the list. */
   .chapter--process .process-detail {
@@ -1254,430 +1267,6 @@
   .chapter > .scene-inner { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
 }
 
-/* ================================================================================
- * MOBILE VERTICAL FLOW — Blueprint 2026-08-11, concept C (owner-approved)
- *
- * The horizontal scene track proved uncontrollable on phones, so ≤900px becomes ONE
- * vertical document. `data-flow="vertical"` is stamped on <html> by an inline snippet
- * before first paint and kept current by app.js on the 900px matchMedia boundary; the
- * desktop code path is untouched — every rule here is double-gated by the attribute
- * AND the media query, so >900px can never see it.
- *
- * Structure: the fixed scene viewport becomes static document flow, the flex track a
- * block, and each chapter a content-sized section. The chapter scrollports from the
- * earlier mobile repair become unnecessary — the document itself is the scrollport.
- *
- * Hero (concept C): the intro chapter is a 175svh runway. Inside it the intro layout
- * is a sticky frame; the video plate starts at frame height (cover, maximized) and —
- * driven by --hero-p (0→1, set by a passive scroll listener in app.js) — settles to
- * the source's own 832:464 full frame while the brand copy and the consultation CTA
- * rise in beneath it. With no JS, --hero-p falls back to 1: the settled state,
- * everything visible, native scroll — the page degrades to concept B, not to a
- * broken pin.
- * ================================================================================ */
-@media (max-width: 900px) {
-  /* main.css:29 locks the root (`html,body { height:100%; overflow:hidden }`) — the
-   * exact lock the horizontal engine needed and the vertical document must not have.
-   * Three measured lessons live in this one rule:
-   *   1. X must not be visible — stray right edges inside the horizontal sub-rails
-   *      widened the layout viewport to 437px on a 390px phone (MENU sliced off).
-   *   2. BODY must stay `overflow: visible` — ANY non-visible overflow on body makes
-   *      body the sticky containment scrollport instead of the viewport, and the hero
-   *      pin silently never engages (the Hallmark audit found a full blank viewport
-   *      where the settled frame should have held).
-   *   3. The X-clip therefore lives on the ROOT element only, where overflow is
-   *      applied to the viewport itself and sticky still tracks it. (`clip` on one
-   *      axis with `auto` on the other computes back to `hidden`, so on html the
-   *      distinction is moot — on body it is fatal, see 2.) */
-  html[data-flow="vertical"] {
-    height: auto;
-    min-height: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior-y: auto;
-  }
-
-  html[data-flow="vertical"] body {
-    height: auto;
-    min-height: 100%;
-    overflow: visible;
-  }
-
-  /* X-leaks are fenced HERE, with `clip`: the sub-rails' stray right edges must not
-   * widen the mobile layout viewport (437px on a 390px phone, page zoomed out), but a
-   * scroll-container value anywhere above the hero would capture its sticky pin.
-   * `overflow-x: clip` is the one value that clips without becoming a scrollport. */
-  html[data-flow="vertical"] .site-shell {
-    height: auto;
-    overflow-x: clip;
-    overflow-y: visible;
-  }
-
-  html[data-flow="vertical"] .scene-viewport {
-    position: static;
-    height: auto;
-    margin-top: var(--header-h);
-    overflow: visible;
-    scroll-snap-type: none;
-    touch-action: auto;
-  }
-
-  html[data-flow="vertical"] .scene-track { display: block; height: auto; }
-
-  html[data-flow="vertical"] .chapter {
-    flex: none;
-    width: 100%;
-    min-width: 0;
-    height: auto;
-    min-height: 0;
-    overflow: visible;
-    scroll-snap-align: none;
-    scroll-margin-top: var(--header-h);
-  }
-
-  html[data-flow="vertical"] .chapter > .scene-inner {
-    height: auto;
-    min-height: 0;
-    overflow: visible;
-    /* Section rhythm: the inquiry bar no longer needs a per-scene reservation on
-     * every chapter — only the last one, which it actually sits over at rest. */
-    padding-bottom: 72px;
-  }
-
-  html[data-flow="vertical"] .chapter--about > .scene-inner {
-    padding-bottom: calc(124px + env(safe-area-inset-bottom));
-  }
-
-  /* Horizontal-only chrome. */
-  html[data-flow="vertical"] .chapter-edge { display: none; }
-
-  /* ------------------------------------------------ hero runway + sticky frame */
-  html[data-flow="vertical"] .chapter--intro { height: 175svh; }
-
-  /* The frame is height:auto and does NOT clip: at p=0 the copy sits just below the
-   * viewport-height video (below the fold, opacity 0 — invisible but never clipped
-   * away), and the scrub pulls it up as the video settles. A fixed-height clipping
-   * frame was tried first and the render audit correctly read it as content loss:
-   * a clipped box with no scrollable clipper is indistinguishable from a defect. */
-  html[data-flow="vertical"] .chapter--intro .intro-layout {
-    position: sticky;
-    top: var(--header-h);
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    min-height: 0;
-    padding: 0 0 24px;
-    gap: 0;
-    overflow: visible;
-  }
-
-  html[data-flow="vertical"] .chapter--intro .hero-composition {
-    order: -1;
-    position: relative;
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: none;
-    aspect-ratio: auto;
-    align-self: stretch;
-    justify-self: auto;
-    /* 55.77vw = 464/832 — the full frame. (1-p)·frame-height + p·full-frame. */
-    height: calc((1 - var(--hero-p, 1)) * (100svh - var(--header-h)) + var(--hero-p, 1) * 55.77vw);
-  }
-
-  html[data-flow="vertical"] .chapter--intro .intro-hero-video {
-    object-fit: cover;
-    object-position: 50% 50%;
-  }
-
-  /* The is-active entrance animations fill forwards to opacity 1 — they would beat
-   * the scrub-driven reveal and print the copy over the cover-state footage, the
-   * exact defect the 844x390 audit graded Major. The hero owns its own choreography.
-   * The exception has to reach the CHILD ramps too: the J1 type system at :441-463
-   * neutralises the copy container at (0,4,0) and animates eyebrow/h1/description/
-   * text-link individually, so both the container rule and the child rules are
-   * re-neutralised here at higher specificity. */
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner > .chapter__copy,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner > .media-stage,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .eyebrow,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy > h1,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy > h2,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__description,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .text-link {
-    animation: none;
-  }
-
-  /* Rendered proof beat intention here once already: the (0,4,0) neutraliser at :441
-   * pinned the copy to `opacity: 1` and the scrub reveal silently lost the cascade.
-   * Both reveal targets now carry the same `.is-active .scene-inner` chain so they
-   * outrank it. The CTA ramp starts at p=.375 (1.6p−.6) — the audit measured the old
-   * 2p−1 ramp leaving the buttons ghost-grey through most of the settle. */
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cta {
-    --hero-reveal: clamp(0, var(--hero-p, 1) * 1.6 - 0.6, 1);
-    opacity: var(--hero-reveal);
-    transform: translateY(calc((1 - var(--hero-reveal)) * 14px));
-    padding-right: var(--safe-right);
-    padding-left: var(--safe-left);
-  }
-
-  html[data-flow="vertical"] .chapter--intro .chapter__copy { margin-top: 18px; }
-
-  html[data-flow="vertical"] .vflow-cta {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 16px;
-  }
-
-  html[data-flow="vertical"] .vflow-cta a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-height: 56px;
-    border: 1px solid var(--line);
-    background: var(--main);
-    font-size: 13px;
-    color: var(--ink);
-    text-decoration: none;
-    transition: transform 160ms cubic-bezier(.22, 1, .36, 1), background 200ms ease;
-  }
-
-  html[data-flow="vertical"] .vflow-cta a b { font-weight: 600; color: var(--point-deep); }
-  html[data-flow="vertical"] .vflow-cta a:active { transform: scale(.98); background: var(--sub); }
-  html[data-flow="vertical"] .vflow-cta a:focus-visible { outline: 2px solid var(--point); outline-offset: 2px; }
-
-  /* Screen one closed with four 문의 buttons: this in-flow pair plus the fixed bar
-   * carrying the identical labels ~51px below it (Hallmark M3, 2026-08-15). While the
-   * in-flow pair is on screen it owns the job; the bar returns as it scrolls away.
-   * app.js observes [data-vflow-cta] and toggles the class. */
-  html[data-flow="vertical"] .fixed-inquiry {
-    transition: opacity 240ms ease, transform 240ms ease;
-  }
-  html[data-flow="vertical"].vflow-cta-inline .fixed-inquiry {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(10px);
-  }
-
-  /* Landscape phones: a pinned scrub has no room — the settled 55.77vw plate alone
-   * can exceed the viewport. The hero renders as the settled static state (concept
-   * B), full frame at its own ratio, copy and CTA in normal flow. Same shape the
-   * reduced-motion contract uses. */
-  @media (orientation: landscape) {
-    html[data-flow="vertical"] .chapter--intro { height: auto; }
-    html[data-flow="vertical"] .chapter--intro .intro-layout {
-      position: static;
-      height: auto;
-      overflow: visible;
-      padding-top: 14px;
-    }
-    /* Height-capped: at 55.77vw the frame alone is taller than a landscape phone's
-     * viewport, and the audit's first screen was a wordless image slab. Sized from
-     * the available height instead, centered, so the headline shares screen one. */
-    html[data-flow="vertical"] .chapter--intro .hero-composition {
-      height: auto;
-      aspect-ratio: 832 / 464;
-      width: min(100%, calc((100svh - var(--header-h) - 110px) * 1.7931));
-      margin-inline: auto;
-    }
-    /* The reveal ramp was raised to (0,5,1) to beat the type neutraliser — these
-     * static-state overrides must sit at the same altitude or landscape screen one
-     * renders its headline at the ramp's p=0 floor: present, hit-testable, invisible. */
-    html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy,
-    html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cta,
-    html[data-flow="vertical"] .chapter--intro .chapter__copy,
-    html[data-flow="vertical"] .chapter--intro .vflow-cta {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  /* Short portrait screens (320x568 class): the settled CTA row rested at 510-566
-   * while the fixed inquiry dock occupies 515-568 — two identical CTA surfaces in a
-   * pixel-level collision. The hold clears the dock instead. */
-  @media (max-height: 640px) and (orientation: portrait) {
-    html[data-flow="vertical"] .chapter--intro .intro-layout {
-      padding-bottom: calc(76px + env(safe-area-inset-bottom));
-    }
-  }
-}
-
-/* ================================================================================
- * GAZU-PRIMARY RESTYLE — owner decisions 2026-08-14 (design/user_decisions_20260814.md)
- * B/W ink-on-paper system (tokens converted at the root), display type as
- * environment, ink-band category cards, full-wide scrub-driven hero footage.
- * Vertical (≤900px) only for structure; the palette applies globally via tokens.
- * ================================================================================ */
-.vflow-display, .vflow-cards { display: none; }
-
-@media (max-width: 900px) {
-  /* --- hero v3: full-wide footage, type as environment, playback scrubbed.
-   * v3.1: GAZU's screen one shows everything — masthead, footage, hook copy, CTAs.
-   * The scrub therefore drives ONLY the playhead; the reveal choreography that
-   * emptied the first screen's lower half (dead paper) is retired.
-   * 156svh, not 170: the sticky frame's available travel is ~157svh at 390×844, so a
-   * longer runway let the last ~13% of the playhead scrub while the frame slid up. --- */
-  html[data-flow="vertical"] .chapter--intro { height: 156svh; }
-
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cta,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cards {
-    opacity: 1;
-    transform: none;
-  }
-
-  html[data-flow="vertical"] .vflow-display {
-    order: -2;
-    display: flex;
-    flex-direction: column;
-    padding: 10px var(--safe-left) 0;
-    font-family: var(--font-editorial);
-    font-weight: 400;
-    font-size: clamp(64px, 23vw, 150px);
-    line-height: .88;
-    letter-spacing: -.02em;
-    color: var(--ink);
-    z-index: 2;
-    /* The masthead overlaps the footage edge — type frames the image, GAZU-style. */
-    margin-bottom: calc(clamp(64px, 23vw, 150px) * -0.16);
-    pointer-events: none;
-  }
-
-  html[data-flow="vertical"] .chapter--intro .hero-composition {
-    order: -1;
-    /* Full-wide, full-frame from the first pixel — the drama is the scrubbed
-     * playback, not a size morph. Fixed height: zero reflow during the scrub. */
-    height: 55.77vw;
-    z-index: 1;
-  }
-
-  html[data-flow="vertical"] .chapter--intro .chapter__copy h1,
-  html[data-flow="vertical"] .chapter--intro .chapter__copy h2 {
-    font-size: clamp(30px, 8.6vw, 44px);
-    line-height: 1.12;
-    letter-spacing: -.01em;
-  }
-
-  /* --- ink-band category cards (the owner's "탭") --- */
-  html[data-flow="vertical"] .vflow-cards {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: min(68vw, 300px);
-    gap: 1px;
-    margin-top: 26px;
-    padding: 18px var(--safe-left) 20px;
-    background: var(--ink);
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
-  }
-  html[data-flow="vertical"] .vflow-cards::-webkit-scrollbar { display: none; }
-
-  html[data-flow="vertical"] .vflow-cards a {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto auto;
-    column-gap: 12px;
-    row-gap: 6px;
-    padding: 14px 16px 16px 0;
-    scroll-snap-align: start;
-    text-decoration: none;
-    color: var(--main);
-    border-left: 1px solid rgba(246, 245, 242, .28);
-    padding-left: 16px;
-    transition: transform 200ms cubic-bezier(.22, 1, .36, 1);
-  }
-  html[data-flow="vertical"] .vflow-cards a:active { transform: scale(.98); }
-  html[data-flow="vertical"] .vflow-cards a:focus-visible { outline: 2px solid var(--main); outline-offset: 2px; }
-
-  html[data-flow="vertical"] .vflow-cards span {
-    grid-row: 1 / 4;
-    font-family: var(--font-editorial);
-    font-size: 13px;
-    color: rgba(246, 245, 242, .6);
-  }
-  html[data-flow="vertical"] .vflow-cards strong {
-    font-family: var(--font-editorial);
-    font-weight: 400;
-    font-size: 24px;
-    letter-spacing: .02em;
-  }
-  html[data-flow="vertical"] .vflow-cards em {
-    font-style: normal;
-    font-size: 12px;
-    line-height: 1.5;
-    color: rgba(246, 245, 242, .72);
-    word-break: keep-all;
-  }
-  html[data-flow="vertical"] .vflow-cards b {
-    font-weight: 500;
-    font-size: 11px;
-    letter-spacing: .08em;
-  }
-
-  /* --- display-scale section type + staggered entrance (design-motion-principles:
-   * one beat, three steps, 60ms apart, existing easing; reduced-motion flattened by
-   * the global kill switch in main.css) --- */
-  html[data-flow="vertical"] .chapter:not(.chapter--intro) h2 {
-    font-size: clamp(32px, 8.8vw, 46px);
-    line-height: 1.1;
-    letter-spacing: -.01em;
-  }
-
-  html[data-flow="vertical"] .chapter:not(.chapter--intro) .eyebrow {
-    font-size: 10px;
-    letter-spacing: .22em;
-  }
-
-  html[data-flow="vertical"] .chapter:not(.chapter--intro) .scene-inner > * {
-    transition-duration: 420ms;
-  }
-  html[data-flow="vertical"] .chapter:not(.chapter--intro):not(.is-active) .scene-inner > * {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  html[data-flow="vertical"] .chapter:not(.chapter--intro).is-active .scene-inner > *:nth-child(2) { transition-delay: 60ms; }
-  html[data-flow="vertical"] .chapter:not(.chapter--intro).is-active .scene-inner > *:nth-child(3) { transition-delay: 120ms; }
-
-  /* The fixed 55.77vw hero height above outranks the earlier landscape exception by
-   * order — re-assert the landscape shape (height-capped static frame, no runway). */
-  @media (orientation: landscape) {
-    html[data-flow="vertical"] .chapter--intro { height: auto; }
-    html[data-flow="vertical"] .chapter--intro .hero-composition {
-      height: auto;
-      aspect-ratio: 832 / 464;
-      width: min(100%, calc((100svh - var(--header-h) - 110px) * 1.7931));
-      margin-inline: auto;
-    }
-    html[data-flow="vertical"] .vflow-display { font-size: clamp(48px, 11vw, 84px); }
-  }
-}
-
-/* Reduced motion: no pin, no scrub, no reveal choreography — the settled state,
- * statically. The runway collapses so there is no empty scroll distance. */
-@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
-  html[data-flow="vertical"] .chapter--intro { height: auto; }
-  html[data-flow="vertical"] .chapter--intro .intro-layout {
-    position: static;
-    height: auto;
-    overflow: visible;
-    padding-top: 14px;
-  }
-  html[data-flow="vertical"] .chapter--intro .hero-composition {
-    height: auto;
-    aspect-ratio: 832 / 464;
-  }
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .chapter__copy,
-  html[data-flow="vertical"] .chapter--intro.is-active .scene-inner .vflow-cta,
-  html[data-flow="vertical"] .chapter--intro .chapter__copy,
-  html[data-flow="vertical"] .chapter--intro .vflow-cta {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* The render audit's eight remaining overlaps were one disease in three chapters: an
  * over-constrained scene grid. The scene is a fixed `height: 100%` box, and inside it the
  * `auto` rows from the earlier fix still resolved to the LEFTOVER space, not to their
@@ -1699,11 +1288,6 @@
   .chapter--shop .shop-layout { grid-template-rows: max-content max-content max-content; }
   .chapter--why .why-layout { grid-template-rows: max-content max-content; }
 }
-
-/* The CTA block only exists in the vertical flow; on the desktop grid it must not
- * become a third auto-placed grid child (the intro credit already taught that lesson
- * at :216-218). Hidden everywhere, shown by the vertical-flow section below. */
-.vflow-cta { display: none; }
 
 /* Landscape keeps the corner pill, and the pill sits exactly where the WHY evidence
  * caption sits — bottom-right. At 932x430 the two inquiry links and the next-chapter
@@ -1790,4 +1374,148 @@
     align-content: start;
     gap: 14px;
   }
+}
+
+/* ============================================================================
+ * 02 START — typography CTA chapter. Owner instruction 2026-08-15 (Telegram):
+ * back to the horizontal chapter track and the olive system, hero footage always
+ * playing full-wide, and "타이포그래피 CTA" as its own chapter right after it.
+ * The chapter is carried by type alone: the intro's own words (its eyebrow and
+ * media mark already say BRAND / TO COMMERCE) scaled to display size in the
+ * editorial face. The two links are the same approved inquiry channels the fixed
+ * bar uses — no new claims, no invented functions.
+ * ========================================================================== */
+/* justify-items MUST stay stretch: a start-justified grid item shrink-wraps to its
+ * widest line, so an overwide display word would drag the whole copy block — CTA row
+ * included — past the viewport edge. */
+.chapter--start .start-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* `safe center`: on viewports where the stack is taller than the scene, plain
+   * center pushes the overflow above the scroll origin where no gesture can reach
+   * it (Hallmark 2026-08-15 M1, 844x390 — the chapter opened without BRAND). Safe
+   * centering falls back to start alignment when the content overflows. */
+  align-content: safe center;
+}
+
+
+.start-display {
+  margin: 0 0 30px;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-editorial);
+  font-weight: 400;
+  font-size: clamp(64px, 10.5vw, 148px);
+  line-height: 0.94;
+  letter-spacing: -0.015em;
+  color: var(--point);
+}
+
+/* The connective reads as an interstitial, not a third headline word. */
+.start-display span:nth-child(2) {
+  font-size: 0.38em;
+  line-height: 1.5;
+  letter-spacing: 0.34em;
+  color: var(--muted);
+}
+
+.chapter--start h2 {
+  font-size: clamp(22px, 2.6vw, 32px);
+  line-height: 1.42;
+}
+
+.chapter--start .chapter__description { color: var(--muted); }
+
+.start-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.start-cta a {
+  min-height: 54px;
+  min-width: 150px;
+  padding: 0 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--point);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 220ms ease, color 220ms ease,
+    transform 220ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.start-cta a b { font-weight: 600; color: var(--point); transition: color 220ms ease; }
+
+.start-cta a:hover,
+.start-cta a:focus-visible {
+  background: var(--point);
+  color: var(--main);
+  transform: translateY(-2px);
+}
+
+.start-cta a:hover b,
+.start-cta a:focus-visible b { color: var(--sub); }
+
+.start-cta a:focus-visible { outline: 2px solid var(--point); outline-offset: 2px; }
+
+/* While START is the active chapter its own CTA pair owns the inquiry job — the
+ * fixed corner/bottom pills carry the identical two labels and rendering both is
+ * the duplicated-CTA tell the 2026-08-15 Hallmark round flagged. Same idiom the
+ * :has() ready-state rules above already rely on. */
+.site-shell:has(.chapter--start.is-active) .fixed-inquiry {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fixed-inquiry { transition: opacity 240ms ease; }
+
+@media (max-width: 900px) {
+  /* 14vw, not 17: COMMERCE is eight serif capitals; at 17vw it ran past the 390px
+   * viewport (measured 66.3px → clipped mid-E). 14vw keeps the longest word inside
+   * the gutters at every portrait width down to 320. */
+  .start-display { font-size: clamp(42px, 14vw, 96px); margin-bottom: 24px; }
+  .start-cta { width: 100%; }
+  .start-cta a { flex: 1 1 45%; min-width: 0; }
+}
+
+/* Short viewports (landscape phones): step the display down so the whole
+ * BRAND / TO / COMMERCE stack plus CTA fits a ~390px-tall scene. This block must
+ * stay AFTER the width-based sizes above — same specificity, and the height
+ * constraint is the stricter one when both apply. */
+@media (max-height: 520px) {
+  .start-display { font-size: clamp(30px, 9vh, 56px); margin-bottom: 16px; }
+  .chapter--start h2 { font-size: clamp(18px, 5.2vh, 24px); }
+  .start-cta { margin-top: 18px; }
+  .start-cta a { min-height: 46px; }
+}
+
+/* Full-wide hero footage on portrait phones (owner: "영상은 … 풀와이드로").
+ * The plate breaks out of the scene padding and runs edge to edge. Portrait only:
+ * every portrait phone is narrower than the source's 832px native width, so the
+ * no-upscale contract of the full-frame decision still holds; landscape keeps the
+ * capped centered plate that rule was written for. */
+@media (max-width: 900px) and (orientation: portrait) {
+  .chapter--intro .hero-composition {
+    width: calc(100% + var(--safe-left) + var(--safe-right));
+    max-width: none;
+    margin-left: calc(-1 * var(--safe-left));
+    justify-self: start;
+  }
+
+  /* The plate used to sit directly under the copy with all leftover height pooling
+   * below it (the recorded INTRO_PLATE_CENTERING_AIR minor). Give the plate row the
+   * leftover and center it there, so the air splits evenly around the footage. */
+  .chapter--intro .intro-layout {
+    /* min-content floor: the row may grow to absorb leftover height but must never
+     * compress below the plate's aspect height, or the plate would center-bleed
+     * over the copy on short screens (the exact disease the max-content rows in
+     * this file were written to cure). */
+    grid-template-rows: max-content minmax(min-content, 1fr);
+  }
+  .chapter--intro .hero-composition { align-self: center; }
 }

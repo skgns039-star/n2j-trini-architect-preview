@@ -138,14 +138,23 @@
  * and an edge fade says the row continues.
  */
 @media (max-width: 900px) {
+  /* Three equal columns, same idiom as the SHOP rail — a scrolled rail of three
+   * tabs always leaves one label sliced against an unfaded edge once tab 2 or 3
+   * is selected (owner's 2026-08-16 recording, "…한 비용"). With only three tabs
+   * there is nothing to scroll for; long labels wrap at their spaces. */
   .evidence-tabs {
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
   }
 
   .evidence-tabs button {
-    flex-basis: 40%;
-    min-width: 40%;
+    flex-basis: auto;
+    min-width: 0;
+    font-size: 11px;
+    white-space: normal;
+    word-break: keep-all;
+    line-height: 1.3;
   }
 }
 
@@ -849,11 +858,11 @@
   .chapter--why .evidence-panel { height: auto; min-height: 0; overflow: visible; }
 }
 
-/* The WHY tab labels overran their own boxes by 14-17px at 320px — clipped mid-word with
- * no indication, on the control that selects what the chapter is about. */
-@media (max-width: 360px) {
-  .evidence-tabs button { flex-basis: 62%; min-width: 62%; font-size: 11px; }
-}
+/* (Removed 2026-08-16.) The ≤360px flex-basis/min-width widening for `.evidence-tabs
+ * button` belonged to the retired scroll-rail idiom. The rail is a 3-equal-column
+ * grid now; left in place, this later block overrode the grid's `min-width: 0` and
+ * would re-create the sliced-label defect the instant the rail ever reverted to
+ * flex — the same regression class that has bitten the SHOP rail twice. */
 
 /* --------------------------------------------- The inquiry dock, on a phone
  * 93 of the audit's 168 painted overlaps are this one element. It is a floating pill at
@@ -1090,10 +1099,13 @@
 
 /* --- SHOP: 01 / 02 / 03 sat too far apart to reach. Screenshot 3-4, item 5.
  * `.state-switch button` carries `min-width: 112px` from the desktop rule, so three
- * options needed 336px of a 324px row and the third had to be scrolled to. They fit now.
- */
+ * options needed 336px of a 324px row and the third had to be scrolled to.
+ * `display: grid` is load-bearing: the rail is `display: flex` at main.css, so the
+ * grid-auto declarations alone are inert and the third label slices at the edge —
+ * this regressed once already (2026-08-16 owner recording, "03 LAN"). Three equal
+ * columns need the display mode switched HERE. */
 @media (max-width: 900px) {
-  .chapter--shop .shop-product-rail { grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .chapter--shop .shop-product-rail { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
   .chapter--shop .shop-product-rail button {
     min-width: 0;
     grid-template-columns: 22px minmax(0, 1fr);
@@ -1533,5 +1545,17 @@
 }
 @media (max-width: 900px) and (prefers-reduced-motion: reduce) {
   .chapter--plans .works-viewer__frame .works-scroll-viewport { transform: none; }
+}
+
+/* ------------------------------------------------- hero plate poster fallback
+ * Belt to the app.js braces (armIntroPlayRetry): if a webview never even loads the
+ * footage's metadata, the plate shows the poster artwork instead of a blank cream
+ * box with placeholder labels — the empty first screen in the owner's 2026-08-16
+ * KakaoTalk-webview recording. The video element paints over this the moment it
+ * has anything to show. */
+.chapter--intro .hero-composition {
+  background-image: url("../assets/videos/intro/n2jtrini-hero-poster.jpg");
+  background-size: cover;
+  background-position: 50% 42%;
 }
 

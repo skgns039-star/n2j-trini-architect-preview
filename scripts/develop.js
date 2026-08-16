@@ -215,7 +215,11 @@
     // Selecting a tab dragged the whole chapter 47-92px left, cutting the left edge
     // off the eyebrow, the headline and the body, with no scrollbar and no gesture to
     // bring it back. Scroll the rail and nothing else.
-    const target = button.offsetLeft - (rail.clientWidth - button.offsetWidth) / 2;
+    // Left-align, don't centre: centring leaves the PREVIOUS tab half-sliced
+    // against the rail's left edge with no fade or affordance on that side
+    // (owner's 2026-08-16 recording — "…한 비용"). Flush-left puts earlier tabs
+    // fully off-screen and the next tab peeking into the right-edge fade.
+    const target = button.offsetLeft - 2;
     rail.scrollTo({
       left: Math.max(0, Math.min(target, rail.scrollWidth - rail.clientWidth)),
       behavior: reduced.matches ? 'auto' : 'smooth',

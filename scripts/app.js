@@ -87,6 +87,30 @@ const mediaConfig = { introHeroVideo:{ src:'./assets/videos/intro/n2jtrini-main.
 // nearly square. develop.css owns the crop.
 if (introVideo) { introVideo.src = mediaConfig.introHeroVideo.src; introVideo.style.objectFit = mediaConfig.introHeroVideo.objectFit; }
 
+// A rejected play() must NOT hide the footage. In-app browsers (the owner watches
+// through KakaoTalk's webview) and iOS Low Power Mode veto autoplay; the old catch
+// stripped `is-ready`, which is the class that lifts the video from opacity:0 — so
+// the hero rendered as an empty cream plate with placeholder labels, poster and all
+// invisible (owner's 2026-08-16 screen recording, frames f003/f029). The frame the
+// element already has is always shown; playback retries on the first real gesture.
+let introPlayRetryArmed = false;
+
+function armIntroPlayRetry() {
+  if (introPlayRetryArmed) return;
+  introPlayRetryArmed = true;
+  const retry = () => {
+    introPlayRetryArmed = false;
+    // Nudge every vetoed autoplay video, not just the hero — the same policy
+    // blocks the WHY/SHOP loops in the same webviews.
+    document.querySelectorAll('video[autoplay]').forEach((video) => {
+      if (video.paused && !video.ended) video.play().catch(() => {});
+    });
+    syncIntroVideo();
+  };
+  addEventListener('touchend', retry, { once: true, passive: true });
+  addEventListener('pointerup', retry, { once: true });
+}
+
 function syncIntroVideo() {
   if (!introVideo) return;
   introVideo.muted = true;
@@ -94,13 +118,16 @@ function syncIntroVideo() {
   introVideo.playsInline = true;
   const active = chapterIds[state.active] === 'intro' && !reducedMotion.matches && !document.hidden;
   if (active) {
-    introVideo.play().then(() => introVideo.classList.add('is-ready')).catch(() => introVideo.classList.remove('is-ready'));
+    introVideo.play().then(() => introVideo.classList.add('is-ready')).catch(() => armIntroPlayRetry());
   } else {
     introVideo.pause();
   }
 }
 
+// Reveal on data, not on successful playback: a poster or first frame beats an
+// empty plate even when the webview refuses to play.
 introVideo?.addEventListener('loadedmetadata', () => introVideo.classList.add('is-ready'), { once:true });
+introVideo?.addEventListener('loadeddata', () => introVideo.classList.add('is-ready'), { once:true });
 introVideo?.addEventListener('error', () => introVideo.classList.remove('is-ready'), { once:true });
 document.addEventListener('visibilitychange', syncIntroVideo);
 reducedMotion.addEventListener?.('change', syncIntroVideo);

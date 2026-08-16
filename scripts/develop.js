@@ -403,3 +403,75 @@
 
   root.classList.add('n2j-flick-ready');
 })();
+
+/* ---------------------------------------------- PROCESS mobile: scroll-linked 3D curve
+ * Owner 2026-08-16: on a phone the process had been flattened to a plain list, losing the
+ * curve's identity. develop.css now lays the seven steps as a vertical serpentine whose
+ * nodes stand up from a back-tilt as they enter; this controller drives the two things CSS
+ * cannot: it reveals each node once as it scrolls in (the 3D action), and it makes the node
+ * nearest the viewport centre the active step whose description shows — so one vertical
+ * scroll walks 상담 → 완료. Portrait phones only; desktop/landscape keep the horizontal rail.
+ */
+(() => {
+  const chapter = document.querySelector('.chapter--process');
+  if (!chapter) return;
+  const steps = [...chapter.querySelectorAll('.process-step')];
+  if (!steps.length) return;
+  const mq = window.matchMedia('(max-width: 900px) and (orientation: portrait)');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  let revealObserver = null;
+  let scroller = null;
+  let onScroll = null;
+  let activeIndex = -1;
+
+  const teardown = () => {
+    if (revealObserver) { revealObserver.disconnect(); revealObserver = null; }
+    if (scroller && onScroll) scroller.removeEventListener('scroll', onScroll);
+    scroller = null; onScroll = null;
+  };
+
+  const syncActive = () => {
+    // Map scroll progress across the whole scroller onto the seven steps, so scrolling to
+    // the bottom always lands on 완료 even when the serpentine only just overflows. Reveal
+    // every step up to the active one too, so the walk cannot leave a node still tilted
+    // back below an IntersectionObserver margin.
+    if (!scroller) return;
+    const max = scroller.scrollHeight - scroller.clientHeight;
+    const prog = max > 4 ? scroller.scrollTop / max : 0;
+    const best = Math.min(steps.length - 1, Math.max(0, Math.round(prog * (steps.length - 1))));
+    // Reveal is left to the per-node IntersectionObserver so each back-tilt actually plays
+    // as its own node enters (Hallmark m2: revealing all-up-to-active flipped them flat
+    // before they were on screen). Here we only track the active step for the description.
+    if (best !== activeIndex) { activeIndex = best; steps[best].click(); }
+  };
+
+  const setup = () => {
+    teardown();
+    if (!mq.matches) { steps.forEach((s) => s.classList.remove('is-inview')); activeIndex = -1; return; }
+
+    if (reduce.matches) {
+      steps.forEach((s) => s.classList.add('is-inview'));
+    } else {
+      revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) { e.target.classList.add('is-inview'); revealObserver.unobserve(e.target); }
+        });
+      }, { root: null, rootMargin: '0px 0px -8% 0px', threshold: 0.2 });
+      steps.forEach((s) => revealObserver.observe(s));
+    }
+
+    scroller = chapter.querySelector('.scene-inner');
+    onScroll = () => requestAnimationFrame(syncActive);
+    if (scroller) scroller.addEventListener('scroll', onScroll, { passive: true });
+    activeIndex = -1;
+    syncActive();
+  };
+
+  setup();
+  mq.addEventListener?.('change', setup);
+  reduce.addEventListener?.('change', setup);
+  window.addEventListener('orientationchange', () => setTimeout(setup, 150));
+  // The reachability pass marks .scene-inner scrollable after measuring; re-bind then.
+  window.addEventListener('hashchange', () => { if (mq.matches) setTimeout(setup, 180); });
+})();

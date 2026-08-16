@@ -1133,112 +1133,111 @@
   .plan-option { flex-basis: 32%; min-width: 32%; }
 }
 
-/* --- PROCESS: vertical on a phone. Screenshot 5.
- * The seven steps are absolutely placed along an SVG curve at percentages tuned for a
- * 720px canvas (main.css:320-326). On a 360px screen that canvas has to be scrolled
- * sideways, so a visitor sees 01-03 and has to discover that 04-07 exist at all.
- *
- * A W/M curve is a desktop idea. Vertically the same seven steps are one list, read top
- * to bottom in the order they happen, with the selected step's description beneath —
- * which is what the owner asked for and is also simply the correct shape for the content:
- * a sequence on a narrow screen is a list, not a diagram.
- *
- * The curve, its animated marker and the pager all go: none of them describe anything
- * once the path is gone.
+/* --- PROCESS on a phone: the curve, reborn vertical, with a scroll-linked 3D reveal.
+ * Owner 2026-08-16: the earlier build flattened the seven steps into a plain list and the
+ * curve's identity was lost. It now keeps that identity as a vertical serpentine — the
+ * nodes alternate around a centre spine, the top-to-bottom echo of the desktop W/M curve —
+ * and each node STANDS UP from a slight back-tilt (rotateX + translateY) as it scrolls
+ * into view. A single vertical scroll walks 상담 → 완료; the node nearest the viewport
+ * centre becomes the active step whose description shows (develop.js drives the active
+ * state and the reveal). Portrait phones only — desktop and landscape keep the horizontal
+ * curve rail untouched. transform/opacity only; reduced-motion shows every node statically.
  */
-/* PORTRAIT only. `max-width: 900px` also catches 844x390 landscape, where a seven-item
- * vertical list cannot fit in 390px of height — three steps ran past the stage and the
- * M1 check that had been green went red. Landscape keeps the curve, which is the right
- * shape there: it has the width the canvas was drawn for and none of the height a list
- * needs. The list is for tall narrow screens, which is what it was asked for. */
 @media (max-width: 900px) and (orientation: portrait) {
+  /* process-layout is the one mobile scene whose column was never constrained to the
+   * viewport (the others get minmax(0,1fr) at main.css:530). Its implicit `auto` column
+   * grew to the serpentine's content and pushed the right-hand nodes off-screen. Pin it. */
+  .chapter--process .process-layout { grid-template-columns: minmax(0, 1fr); }
+  .chapter--process .process-stage {
+    display: block;
+    grid-template-rows: none;
+    padding: 8px 6px 20px;
+    perspective: 950px;
+    min-width: 0;
+  }
+  .chapter--process .process-map,
+  .chapter--process .process-nodes { width: 100%; max-width: 100%; }
+  .chapter--process .process-step { max-width: 100%; }
   .chapter--process .process-rail {
     overflow: visible;
     scroll-snap-type: none;
     touch-action: auto;
     min-height: 0;
+    height: auto;
     -webkit-mask-image: none;
     mask-image: none;
   }
-
-  .chapter--process .process-map {
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-    height: auto;
-  }
-
+  .chapter--process .process-map { width: 100%; min-width: 0; min-height: 0; height: auto; position: relative; }
   .chapter--process .process-curve { display: none; }
 
   .chapter--process .process-nodes {
-    position: static;
-    display: grid;
-    gap: 2px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(22px, 5vh, 46px);
+    padding: 20px 0 16px;
+    transform-style: preserve-3d;
   }
-
+  /* the vertical curve — a drawn spine the nodes hang off, alternating side to side */
+  .chapter--process .process-nodes::before {
+    content: "";
+    position: absolute;
+    top: 6px; bottom: 6px; left: 50%;
+    width: 2px;
+    background: linear-gradient(var(--point), rgba(121, 134, 69, .3));
+    transform: translateX(-50%);
+    opacity: .7;
+  }
   .chapter--process .process-step {
-    position: static;
-    transform: none;
-    width: 100%;
-    min-height: 44px;
+    position: relative;
+    inset: auto;
+    width: min(66%, 270px);
+    min-height: 56px;
     display: grid;
-    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-columns: 32px minmax(0, 1fr);
     align-items: center;
     justify-content: start;
-    gap: 10px;
-    padding: 7px 2px;
+    gap: 12px;
+    padding: 12px 15px;
     text-align: left;
-    border-bottom: 1px solid var(--line);
+    background: var(--main);
+    border: 1px solid var(--line);
+    opacity: 0;
+    transform: translateY(26px) rotateX(-15deg);
+    transform-origin: center top;
+    transition: opacity 460ms cubic-bezier(.22, 1, .36, 1),
+                transform 540ms cubic-bezier(.22, 1, .36, 1),
+                border-color 300ms ease, box-shadow 300ms ease, background 300ms ease;
   }
+  .chapter--process .process-step:nth-child(odd)  { align-self: flex-start; margin-left: 5%; }
+  .chapter--process .process-step:nth-child(even) { align-self: flex-end;   margin-right: 5%; }
+  .chapter--process .process-step.is-inview { opacity: 1; transform: translateY(0) rotateX(0); }
+  .chapter--process .process-step::before { display: none; }
 
   .chapter--process .process-step span,
   .chapter--process .process-step strong {
-    position: static;
-    transform: none;
-    top: auto;
-    bottom: auto;
-    left: auto;
+    position: static; transform: none; top: auto; bottom: auto; left: auto; white-space: normal;
   }
+  .chapter--process .process-step span { font-family: var(--font-editorial); font-size: 12px; color: var(--point); }
+  .chapter--process .process-step strong { font-size: 15px; font-weight: 500; }
 
-  .chapter--process .process-step span { font-size: 11px; }
-  .chapter--process .process-step strong { font-size: 14px; }
-
-  /* The active step is the one whose description is showing, so it has to be readable as
-   * such without the curve marker that used to carry that job. */
   .chapter--process .process-step.is-current {
-    background: rgba(242, 238, 215, .6);
-    color: var(--ink);
+    border-color: var(--point);
+    background: rgba(242, 238, 215, .66);
+    box-shadow: 0 12px 26px rgba(27, 29, 22, .1);
   }
-
   .chapter--process .process-step.is-current strong { color: var(--point-deep); }
 
-  /* Description last, under the list. */
   .chapter--process .process-detail {
-    grid-row: 2;
-    margin: 0;
+    margin: 16px 0 0;
     padding-top: 12px;
     border-top: 1px solid var(--line);
   }
-
-  /* A pager for a list you can already see is noise. */
   .chapter--process .rail-index { display: none; }
+}
 
-  /* `auto` rows inside a height-constrained grid distribute leftover space, so the list
-   * row resolved to 156px while the seven steps needed 320 — and with the rail set to
-   * `overflow: visible` they simply painted down over the description instead of being
-   * clipped. `max-content` sizes the track to the list; the scene's own scrollport takes
-   * the overflow, which is what it is there for. */
-  .chapter--process .process-stage {
-    grid-template-rows: max-content max-content;
-    padding: 10px 12px 12px;
-  }
-
-  .chapter--process .process-rail { height: auto; }
-
-  /* The curve node dot is `position: absolute; left: 50%; top: 50%` — a marker ON the
-   * path. With the path gone it floated in the middle of each row. The number already
-   * marks the step. */
-  .chapter--process .process-step::before { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .chapter--process .process-step { opacity: 1 !important; transform: none !important; }
 }
 
 /* The action bar is a PORTRAIT answer. In landscape it spends 52px of a 390px viewport
@@ -1297,9 +1296,11 @@
 @media (orientation: landscape) and (max-height: 500px) {
   .chapter--why .evidence-media__caption { bottom: auto; top: 8px; right: auto; left: 10px; }
 
-  /* Same corner, same rule: once the full-frame hero plate grew at 932x430, its AI
-   * credit chip landed 4px under the inquiry pills. The label yields the corner. */
-  .intro-media-credit { right: auto; left: 0; }
+  /* The bottom-left corner it retreated to now belongs to the prev chapter-edge
+   * arrow (677px² overlap at 932x430 once the hero went full-wide), and BOTH edges
+   * carry full-height chapter-edge strips (~33px wide at 932), so any flush corner
+   * collides. The chip discloses from the top, inset past the edge strip. */
+  .intro-media-credit { top: 12px; right: 48px; bottom: auto; left: auto; }
 }
 
 /* Landscape ≤900px had the same over-constrained grid as portrait, and it cost more:
@@ -1494,28 +1495,43 @@
   .start-cta a { min-height: 46px; }
 }
 
-/* Full-wide hero footage on portrait phones (owner: "영상은 … 풀와이드로").
- * The plate breaks out of the scene padding and runs edge to edge. Portrait only:
- * every portrait phone is narrower than the source's 832px native width, so the
- * no-upscale contract of the full-frame decision still holds; landscape keeps the
- * capped centered plate that rule was written for. */
-@media (max-width: 900px) and (orientation: portrait) {
-  .chapter--intro .hero-composition {
-    width: calc(100% + var(--safe-left) + var(--safe-right));
-    max-width: none;
-    margin-left: calc(-1 * var(--safe-left));
-    justify-self: start;
+/* ---------------------------------------------- PORTFOLIO on a phone: 3D capture card
+ * Owner 2026-08-16: the full-page project screenshots showed only a top sliver in a flat
+ * scroll box ("이미지가 다 안 나와"). On a phone the capture is now a STATIC 3D-tilted card
+ * standing on the project's main (top) frame — the hero of the work. The full page stays
+ * one tap away on the real site via 프로젝트 보기. No scroll-scrubbed pan (Hallmark bans
+ * it) and no persistent will-change. Mobile only; desktop keeps its scroll viewport.
+ *
+ * Self-contained perspective: the ancestor .works-viewer__frame foreshortens away an
+ * ancestor `perspective`, so the depth is baked into the element's own transform. And
+ * `animation: none` stops main.css's `viewer-state` entrance ('both' fill) from clamping
+ * the tilt back to flat — the higher-specificity frame selector wins the override. */
+@media (max-width: 900px) {
+  .chapter--plans .works-viewer { flex-basis: clamp(360px, 54dvh, 480px); min-height: 360px; }
+  .chapter--plans .works-viewer__frame .works-scroll-viewport {
+    overflow: hidden;
+    transform: perspective(1300px) rotateY(-6deg) rotateX(2.5deg);
+    transform-origin: 68% 50%;
+    box-shadow: -14px 20px 40px rgba(27, 29, 22, .22);
+    border: 1px solid rgba(27, 29, 22, .16);
+    animation: none;
   }
-
-  /* The plate used to sit directly under the copy with all leftover height pooling
-   * below it (the recorded INTRO_PLATE_CENTERING_AIR minor). Give the plate row the
-   * leftover and center it there, so the air splits evenly around the footage. */
-  .chapter--intro .intro-layout {
-    /* min-content floor: the row may grow to absorb leftover height but must never
-     * compress below the plate's aspect height, or the plate would center-bleed
-     * over the copy on short screens (the exact disease the max-content rows in
-     * this file were written to cure). */
-    grid-template-rows: max-content minmax(min-content, 1fr);
+  .chapter--plans .works-scroll-viewport::-webkit-scrollbar { display: none; }
+  .chapter--plans .works-media { position: absolute; inset: 0; height: 100%; min-height: 0; }
+  .chapter--plans .works-media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
   }
-  .chapter--intro .hero-composition { align-self: center; }
+  /* The bottom "SCROLL TO EXPLORE / FULL PAGE VIEW" label described the old inner scroll,
+   * which the static card no longer has — hide it so it can't promise a gesture that does
+   * nothing. The real full page is on 프로젝트 보기. */
+  .chapter--plans .works-viewer .media-stage__bottom { display: none; }
 }
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  .chapter--plans .works-viewer__frame .works-scroll-viewport { transform: none; }
+}
+

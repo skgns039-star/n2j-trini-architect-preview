@@ -793,11 +793,17 @@ const planStates = [
 // them at the last fitting glyph ("VANTAMODU / S" — 2026-08-15 Hallmark Major).
 // A midpoint <wbr> gives each one exactly one sanctioned break (VANTA·MODUS,
 // DUCK·FEET) that only engages when the cell is actually too narrow.
-const softBreakLabel = (title) => title.split(' ').map((word) => (
-  word.length >= 8
-    ? `${word.slice(0, Math.ceil(word.length / 2))}<wbr>${word.slice(Math.ceil(word.length / 2))}`
-    : word
-)).join(' ');
+const softBreakLabel = (title) => {
+  // A multi-word label already owns a sanctioned break — its space. Planting a
+  // second, arithmetic break produced "Sehwa Constr / uction" while "Sehwa /
+  // Construction" was sitting right there (2026-08-16 Hallmark minor).
+  const words = title.split(' ');
+  if (words.length > 1) return title;
+  const word = words[0];
+  if (word.length < 8) return title;
+  const mid = Math.ceil(word.length / 2);
+  return `${word.slice(0, mid)}<wbr>${word.slice(mid)}`;
+};
 
 function setupPlansViewer() {
   const rail = document.querySelector('.plans-rail');
